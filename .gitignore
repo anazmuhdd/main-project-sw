@@ -10,3 +10,4 @@ __pycache__/
 *.zip
 Detect-Indian-Currency-*/
 wandb/
+ai-sdk/
