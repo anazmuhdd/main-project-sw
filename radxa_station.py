@@ -9,33 +9,15 @@ import time
 import sys
 import tty
 import termios
-import threading
 import os
 
 # --- CONFIGURATION ---
 LAPTOP_IP = "172.20.10.x" # CHANGE THIS to your Laptop's IP
 WS_URL = f"ws://{LAPTOP_IP}:8000/ws"
-SPEECH_GAP = 3.0
 
 # GLOBAL STATE
-last_speak_time = 0
 command_queue = asyncio.Queue()
-
-def speak(text):
-    """Speaks using espeak on the board with a rate limiter."""
-    global last_speak_time
-    if not text or len(text.strip()) < 2: return
-    
-    current_time = time.time()
-    if (current_time - last_speak_time) < SPEECH_GAP:
-        return
-    
-    print(f"\n[SPEAKER]: {text}")
-    try:
-        subprocess.run(['espeak', '-s', '160', '-a', '100', text], check=True)
-        last_speak_time = time.time()
-    except Exception as e:
-        print(f"Speech error: {e}")
+speech_queue = asyncio.Queue()
 
 def get_key_blocking():
     """Captures keypresses in a thread-safe way."""
@@ -58,13 +40,32 @@ async def keyboard_listener():
             os._exit(0)
         if key in ['1', '2', '3']:
             m = {'1': "OCR", '2': "OBJECT", '3': "CURRENCY"}[key]
-            speak(f"Requesting {m}")
+            # Put a simple notification in speech queue
+            await speech_queue.put(f"Switching to {m}")
             await command_queue.put(f"MODE:{m}")
 
+async def speech_worker():
+    """Consumes words from the queue and speaks them using espeak."""
+    print("[SPEAKER]: Worker started.")
+    while True:
+        text = await speech_queue.get()
+        if text:
+            # We use a slightly faster rate for better flow if words are streamed
+            try:
+                # Use -s 170 for decent speed
+                subprocess.run(['espeak', '-s', '170', '-a', '100', text], 
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            except Exception as e:
+                print(f"Speech error: {e}")
+        speech_queue.task_done()
+
 async def main():
-    print("=== RADXA SMART GLASS STATION (WebSockets) ===")
+    print("=== RADXA SMART GLASS STATION (Streaming AI) ===")
     print(f"[SYSTEM]: Connecting to {WS_URL}...")
     
+    # Start speech worker
+    asyncio.create_task(speech_worker())
+
     async for websocket in websockets.connect(WS_URL):
         try:
             # Task to send commands
@@ -77,24 +78,33 @@ async def main():
             # Task to receive data
             async def receive_data():
                 while True:
-                    message = await websocket.recv()
-                    data = json.loads(message)
+                    message_str = await websocket.recv()
+                    data = json.loads(message_str)
                     
-                    # 1. Handle Audio
-                    if data.get("speech"):
-                        speak(data["speech"])
+                    msg_type = data.get("type")
                     
-                    # 2. Handle Image
-                    img_data = base64.b64decode(data["image"])
-                    nparr = np.frombuffer(img_data, np.uint8)
-                    frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-                    
-                    if frame is not None:
-                        if os.environ.get('DISPLAY'):
+                    if msg_type == "speech_word":
+                        word = data.get("content", "").strip()
+                        if word:
+                            # print(word, end=" ", flush=True)
+                            await speech_queue.put(word)
+                            
+                    elif msg_type == "speech_end":
+                        # print("\n[LLM]: Response finished.")
+                        pass # Could put a beep here
+                        
+                    elif msg_type == "frame":
+                        # Handle Image (Optional display on Radxa)
+                        img_data = base64.b64decode(data["image"])
+                        nparr = np.frombuffer(img_data, np.uint8)
+                        frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+                        
+                        llm_status = "BUSY" if data.get("llm_busy") else "IDLE"
+                        print(f"\r[STATUS] Mode: {data['mode']:<10} | LLM: {llm_status:<5} | Connected: OK", end="", flush=True)
+                        
+                        if frame is not None and os.environ.get('DISPLAY'):
                             cv2.imshow("Smart Glass Feed", frame)
                             cv2.waitKey(1)
-                        else:
-                            print(f"\r[STATUS] Mode: {data['mode']:<10} | Connected: OK", end="", flush=True)
 
             # Parallel execution
             await asyncio.gather(
