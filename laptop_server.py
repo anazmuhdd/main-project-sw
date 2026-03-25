@@ -28,7 +28,7 @@ current_mode = "OBJECT"
 # LLM State
 llm_busy = False
 LLM_URL = "http://localhost:11434/api/generate"
-MODEL_NAME = "qwen3:4b"
+MODEL_NAME = "qwen3.5:2b"
 
 # Global Event for Radxa Connection
 radxa_connected_event = asyncio.Event()
