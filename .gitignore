@@ -13,6 +13,5 @@ yolo26_seg.pt
 yolo26s.pt
 
 # Data and SDKs
-ai-sdk/
 docker_data/
 docker_images_v2.0.x/
