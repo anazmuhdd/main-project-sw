@@ -243,7 +243,7 @@ vsi_nn_graph_t * vnn_CreateYolo26Uint8
       name      - nbg
       operation - nbg
       input     - [640, 640, 3, 1]
-      output    - [6, 300, 1]
+      output    - [8400, 84, 1]
     -----------------------------------------*/
     NEW_VXNODE(node[0], VSI_NN_OP_NBG, 1, 1, 0);
     node[0]->nn_param.nbg.type = VSI_NN_NBG_FILE;
@@ -264,16 +264,16 @@ vsi_nn_graph_t * vnn_CreateYolo26Uint8
     attr.dtype.fmt = VSI_NN_DIM_FMT_NCHW;
     /* @attach_output0/out0_0:out0 */
     memset( &attr, 0, sizeof( attr ) );
-    attr.size[0] = 6;
-    attr.size[1] = 300;
+    attr.size[0] = 8400;
+    attr.size[1] = 84;
     attr.size[2] = 1;
     attr.dim_num = 3;
-    attr.dtype.scale = 2.6947195529937744;
-    attr.dtype.zero_point = 11;
+    attr.dtype.scale = 2.4969520568847656;
+    attr.dtype.zero_point = 0;
     attr.dtype.qnt_type = VSI_NN_QNT_TYPE_AFFINE_ASYMMETRIC;
     NEW_NORM_TENSOR(norm_tensor[0], attr, VSI_NN_TYPE_UINT8);
 
-    /* @images_395:out0 */
+    /* @images_239:out0 */
     memset( &attr, 0, sizeof( attr ) );
     attr.size[0] = 640;
     attr.size[1] = 640;

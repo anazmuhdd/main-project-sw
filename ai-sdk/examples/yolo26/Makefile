@@ -32,7 +32,7 @@ install: $(TARGET)
 	-@mkdir -p $(INSTALL_PREFIX)/etc/npu/yolo26
 	@cp $(TARGET) $(INSTALL_PREFIX)/etc/npu/yolo26
 	-@mkdir -p $(INSTALL_PREFIX)/etc/npu/yolo26/model
-	@cp model/network_binary.nb $(INSTALL_PREFIX)/etc/npu/yolo26/model/ || true
+	@cp model/yolo26.nb $(INSTALL_PREFIX)/etc/npu/yolo26/model/ || true
 	-@mkdir -p $(INSTALL_PREFIX)/etc/npu/yolo26/input_data
 	@cp input_data/* $(INSTALL_PREFIX)/etc/npu/yolo26/input_data || true
 

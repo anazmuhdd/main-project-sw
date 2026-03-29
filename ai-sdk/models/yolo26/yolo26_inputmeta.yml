@@ -4,7 +4,7 @@ input_meta:
   - path: dataset.txt
     type: TEXT
     ports:
-    - lid: images_395
+    - lid: images_239
       category: image
       dtype: float32
       sparse: false
@@ -17,7 +17,7 @@ input_meta:
       - 640
       fitting: scale
       preprocess:
-        reverse_channel: true # BGR to RGB
+        reverse_channel: false # BGR to RGB
         mean:
         - 0
         - 0

@@ -1,6 +1,6 @@
 {
     "Inputs": {
-        "images_395": {
+        "images_239": {
             "name": "images",
             "shape": [
                 1,
@@ -24,17 +24,17 @@
             "name": "attach_output0/out0",
             "shape": [
                 1,
-                300,
-                6
+                84,
+                8400
             ],
             "format": "nchw",
             "quantizer": "asymmetric_affine",
             "quantize": {
                 "qtype": "u8",
-                "max_value": 656.2805786132812,
-                "min_value": -30.872928619384766,
-                "scale": 2.6947195529937744,
-                "zero_point": 11
+                "max_value": 636.7227783203125,
+                "min_value": 0.0,
+                "scale": 2.4969520568847656,
+                "zero_point": 0
             }
         }
     },

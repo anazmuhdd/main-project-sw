@@ -1,136 +1,109 @@
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
-#include <iostream>
 #include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <string.h>
 #include <vector>
-#include <cmath>
+#include <algorithm>
 #include "yolo26_post_process.h"
 
-using namespace std;
+#define CLASS_NUM 80
+#define ANCHOR_NUM 8400
+#define CONF_THRESHOLD 0.25f
+#define NMS_THRESHOLD 0.45f
 
-struct Object
-{
-    cv::Rect_<float> rect;
-    int label;
-    float prob;
-};
+typedef struct {
+    float x1, y1, x2, y2;
+    float score;
+    int class_id;
+} Detection;
 
-static void draw_objects(const cv::Mat& bgr, const std::vector<Object>& objects)
-{
-    static const char* class_names[] = {
-        "person", "bicycle", "car", "motorcycle", "airplane", "bus", "train", "truck", "boat", "traffic light",
-        "fire hydrant", "stop sign", "parking meter", "bench", "bird", "cat", "dog", "horse", "sheep", "cow",
-        "elephant", "bear", "zebra", "giraffe", "backpack", "umbrella", "handbag", "tie", "suitcase", "frisbee",
-        "skis", "snowboard", "sports ball", "kite", "baseball bat", "baseball glove", "skateboard", "surfboard",
-        "tennis racket", "bottle", "wine glass", "cup", "fork", "knife", "spoon", "bowl", "banana", "apple",
-        "sandwich", "orange", "broccoli", "carrot", "hot dog", "pizza", "donut", "cake", "chair", "couch",
-        "potted plant", "bed", "dining table", "toilet", "tv", "laptop", "mouse", "remote", "keyboard", "cell phone",
-        "microwave", "oven", "toaster", "sink", "refrigerator", "book", "clock", "vase", "scissors", "teddy bear",
-        "hair drier", "toothbrush"};
-
-    cv::Mat image = bgr.clone();
-
-    for (size_t i = 0; i < objects.size(); i++)
-    {
-        const Object& obj = objects[i];
-
-        fprintf(stderr, "%2d: %3.0f%%, [%4.0f, %4.0f, %4.0f, %4.0f], %s\n", obj.label, obj.prob * 100, obj.rect.x,
-                obj.rect.y, obj.rect.x + obj.rect.width, obj.rect.y + obj.rect.height, class_names[obj.label]);
-
-        cv::rectangle(image, obj.rect, cv::Scalar(255, 0, 0));
-
-        char text[256];
-        sprintf(text, "%s %.1f%%", class_names[obj.label], obj.prob * 100);
-
-        int baseLine = 0;
-        cv::Size label_size = cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine);
-
-        int x = obj.rect.x;
-        int y = obj.rect.y - label_size.height - baseLine;
-        if (y < 0)
-            y = 0;
-        if (x + label_size.width > image.cols)
-            x = image.cols - label_size.width;
-
-        cv::rectangle(image, cv::Rect(cv::Point(x, y), cv::Size(label_size.width, label_size.height + baseLine)),
-                      cv::Scalar(255, 255, 255), -1);
-
-        cv::putText(image, text, cv::Point(x, y + label_size.height), cv::FONT_HERSHEY_SIMPLEX, 0.5,
-                    cv::Scalar(0, 0, 0));
-    }
-
-    cv::imwrite("result.png", image);
-    printf("Result saved to result.png\n");
+static float iou(Detection a, Detection b) {
+    float x1 = std::max(a.x1, b.x1);
+    float y1 = std::max(a.y1, b.y1);
+    float x2 = std::min(a.x2, b.x2);
+    float y2 = std::min(a.y2, b.y2);
+    float w = std::max(0.0f, x2 - x1);
+    float h = std::max(0.0f, y2 - y1);
+    float inter = w * h;
+    float area_a = (a.x2 - a.x1) * (a.y2 - a.y1);
+    float area_b = (b.x2 - b.x1) * (b.y2 - b.y1);
+    return inter / (area_a + area_b - inter);
 }
 
-extern "C"{
-int yolo26_post_process(const char *imagepath, float **output)
-{
-    printf("yolo26_postprocess.cpp run. \n");
+static void nms(std::vector<Detection>& dets, float threshold) {
+    std::sort(dets.begin(), dets.end(), [](const Detection& a, const Detection& b) {
+        return a.score > b.score;
+    });
 
-    cv::Mat m = cv::imread(imagepath, 1);
-    if (m.empty())
-    {
-        fprintf(stderr, "cv::imread %s failed\n", imagepath);
-        return -1;
+    std::vector<bool> removed(dets.size(), false);
+    for (size_t i = 0; i < dets.size(); i++) {
+        if (removed[i]) continue;
+        for (size_t j = i + 1; j < dets.size(); j++) {
+            if (removed[j]) continue;
+            if (iou(dets[i], dets[j]) > threshold) {
+                removed[j] = true;
+            }
+        }
     }
 
-    // YOLO26 output is [1, 300, 6]
-    // output[0] points to the begining of these 1800 floats.
-    float *data = output[0];
-    const float prob_threshold = 0.25f;
+    std::vector<Detection> result;
+    for (size_t i = 0; i < dets.size(); i++) {
+        if (!removed[i]) result.push_back(dets[i]);
+    }
+    dets = result;
+}
 
-    std::vector<Object> objects;
+int yolo26_post_process(float* data, int width, int height, det_res_t* res) {
+    // data shape is [1, 84, 8400]
+    std::vector<Detection> detections;
+
+    // The data is likely [Channels, Anchors]
+    // 0~3: x_center, y_center, width, height
+    // 4~83: class scores
     
-    // Rescale logic
-    int letterbox_rows = 640;
-    int letterbox_cols = 640;
-    
-    float scale_letterbox;
-    if ((letterbox_rows * 1.0 / m.rows) < (letterbox_cols * 1.0 / m.cols))
-        scale_letterbox = letterbox_rows * 1.0 / m.rows;
-    else
-        scale_letterbox = letterbox_cols * 1.0 / m.cols;
+    for (int i = 0; i < ANCHOR_NUM; i++) {
+        float max_score = 0;
+        int class_id = -1;
+        
+        // Find best class
+        for (int c = 0; c < CLASS_NUM; c++) {
+            float score = data[(4 + c) * ANCHOR_NUM + i];
+            if (score > max_score) {
+                max_score = score;
+                class_id = c;
+            }
+        }
 
-    int resize_cols = int(scale_letterbox * m.cols);
-    int resize_rows = int(scale_letterbox * m.rows);
-    int tmp_h = (letterbox_rows - resize_rows) / 2;
-    int tmp_w = (letterbox_cols - resize_cols) / 2;
-    float ratio_x = (float)m.cols / resize_cols;
-    float ratio_y = (float)m.rows / resize_rows;
+        if (max_score > CONF_THRESHOLD) {
+            float cx = data[0 * ANCHOR_NUM + i];
+            float cy = data[1 * ANCHOR_NUM + i];
+            float w = data[2 * ANCHOR_NUM + i];
+            float h = data[3 * ANCHOR_NUM + i];
 
-    for (int i = 0; i < 300; i++)
-    {
-        float *box = data + i * 6;
-        float score = box[4];
-        if (score < prob_threshold) continue;
-
-        float x0 = box[0];
-        float y0 = box[1];
-        float x1 = box[2];
-        float y1 = box[3];
-        int label = (int)box[5];
-
-        // Rescale to original image
-        x0 = (x0 - tmp_w) * ratio_x;
-        y0 = (y0 - tmp_h) * ratio_y;
-        x1 = (x1 - tmp_w) * ratio_x;
-        y1 = (y1 - tmp_h) * ratio_y;
-
-        Object obj;
-        obj.rect.x = x0;
-        obj.rect.y = y0;
-        obj.rect.width = x1 - x0;
-        obj.rect.height = y1 - y0;
-        obj.label = label;
-        obj.prob = score;
-        objects.push_back(obj);
+            Detection det;
+            det.x1 = cx - w / 2.0f;
+            det.y1 = cy - h / 2.0f;
+            det.x2 = cx + w / 2.0f;
+            det.y2 = cy + h / 2.0f;
+            det.score = max_score;
+            det.class_id = class_id;
+            detections.push_back(det);
+        }
     }
 
-    fprintf(stderr, "detection num: %d\n", (int)objects.size());
-    draw_objects(m, objects);
+    nms(detections, NMS_THRESHOLD);
 
+    int det_num = std::min((int)detections.size(), 64);
+    res->num = det_num;
+    for (int i = 0; i < det_num; i++) {
+        res->results[i].rel_box.x = detections[i].x1 / 640.0f;
+        res->results[i].rel_box.y = detections[i].y1 / 640.0f;
+        res->results[i].rel_box.w = (detections[i].x2 - detections[i].x1) / 640.0f;
+        res->results[i].rel_box.h = (detections[i].y2 - detections[i].y1) / 640.0f;
+        res->results[i].score = detections[i].score;
+        res->results[i].class_index = detections[i].class_id;
+    }
+
+    printf("Post-processing: Found %d detections\n", det_num);
     return 0;
-}
 }

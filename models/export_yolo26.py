@@ -9,9 +9,11 @@ def main():
     print(f"Loading model from {model_path}...")
     model = YOLO(model_path)
     
+    # Force raw output (no NMS head)
+    if hasattr(model.model, 'end2end'):
+        model.model.end2end = False
+    
     # Export the model to ONNX format
-    # We use imgsz=640 (standard for YOLO) and format='onnx'
-    # We ensure it's a static graph by not using dynamic shapes
     print("Exporting to ONNX...")
     path = model.export(format='onnx', imgsz=640, opset=12, simplify=True)
     print(f"Exported to {path}")
