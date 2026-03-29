@@ -1,0 +1,4262 @@
+{
+    "MetaData": {
+        "Name": "torch_jit",
+        "AcuityVersion": "6",
+        "Platform": "tensorflow",
+        "Org_Platform": "onnx"
+    },
+    "Layers": {
+        "attach_output0/out0_0": {
+            "name": "attach_output0/out0",
+            "op": "output",
+            "parameters": {},
+            "inputs": [
+                "@output0_1:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "output0_1": {
+            "name": "output0",
+            "op": "concat",
+            "parameters": {
+                "dim": 1
+            },
+            "inputs": [
+                "@onnx__Concat_442_2:out0",
+                "@onnx__Concat_443_3:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Concat_442_2": {
+            "name": "onnx__Concat_442",
+            "op": "multiply",
+            "parameters": {
+                "axis": 1,
+                "bias": false
+            },
+            "inputs": [
+                "@onnx__Mul_440_4:out0",
+                "@onnx__Mul_441_5:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Concat_443_3": {
+            "name": "onnx__Concat_443",
+            "op": "sigmoid",
+            "inputs": [
+                "@onnx__Sigmoid_397_6:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_440_4": {
+            "name": "onnx__Mul_440",
+            "op": "concat",
+            "parameters": {
+                "dim": 1
+            },
+            "inputs": [
+                "@onnx__Concat_438_7:out0",
+                "@onnx__Concat_439_8:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_441_5": {
+            "name": "onnx__Mul_441",
+            "op": "variable",
+            "parameters": {
+                "shape": [
+                    1,
+                    1,
+                    8400
+                ],
+                "is_scalar": false,
+                "type": "float32"
+            },
+            "inputs": [],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Sigmoid_397_6": {
+            "name": "onnx__Sigmoid_397",
+            "op": "concat",
+            "parameters": {
+                "dim": -1
+            },
+            "inputs": [
+                "@onnx__Concat_368_9:out0",
+                "@onnx__Concat_382_10:out0",
+                "@onnx__Concat_396_11:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Concat_438_7": {
+            "name": "onnx__Concat_438",
+            "op": "real_div",
+            "inputs": [
+                "@onnx__Div_436_12:out0",
+                "@onnx__Div_437_13:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Concat_439_8": {
+            "name": "onnx__Concat_439",
+            "op": "subtract",
+            "inputs": [
+                "@onnx__Add_435_14:out0",
+                "@onnx__Add_433_15:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Concat_368_9": {
+            "name": "onnx__Concat_368",
+            "op": "reshape",
+            "parameters": {
+                "shape": [
+                    1,
+                    80,
+                    -1
+                ]
+            },
+            "inputs": [
+                "@onnx__Concat_368_9_acuity_mark_perm_240:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Concat_382_10": {
+            "name": "onnx__Concat_382",
+            "op": "reshape",
+            "parameters": {
+                "shape": [
+                    1,
+                    80,
+                    -1
+                ]
+            },
+            "inputs": [
+                "@onnx__Concat_382_10_acuity_mark_perm_241:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Concat_396_11": {
+            "name": "onnx__Concat_396",
+            "op": "reshape",
+            "parameters": {
+                "shape": [
+                    1,
+                    80,
+                    -1
+                ]
+            },
+            "inputs": [
+                "@onnx__Concat_396_11_acuity_mark_perm_242:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Div_436_12": {
+            "name": "onnx__Div_436",
+            "op": "add",
+            "inputs": [
+                "@onnx__Add_433_15:out0",
+                "@onnx__Add_435_14:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Div_437_13": {
+            "name": "onnx__Div_437",
+            "op": "variable",
+            "parameters": {
+                "shape": [
+                    1,
+                    1,
+                    1
+                ],
+                "is_scalar": false,
+                "type": "float32"
+            },
+            "inputs": [],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Add_435_14": {
+            "name": "onnx__Add_435",
+            "op": "add",
+            "inputs": [
+                "@onnx__Sub_432_21:out0",
+                "@onnx__Add_431_22:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Add_433_15": {
+            "name": "onnx__Add_433",
+            "op": "subtract",
+            "inputs": [
+                "@onnx__Sub_432_21:out0",
+                "@onnx__Sub_428_24:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Reshape_361_16": {
+            "name": "onnx__Reshape_361",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 80,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 1,
+                "ksize_w": 1,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 0,
+                "pad_w": 0,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_359_32_onnx__Conv_360_25:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Reshape_375_17": {
+            "name": "onnx__Reshape_375",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 80,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 1,
+                "ksize_w": 1,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 0,
+                "pad_w": 0,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_373_34_onnx__Conv_374_26:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Reshape_389_18": {
+            "name": "onnx__Reshape_389",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 80,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 1,
+                "ksize_w": 1,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 0,
+                "pad_w": 0,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_387_20_onnx__Conv_388_19:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Sub_432_21": {
+            "name": "onnx__Sub_432",
+            "op": "variable",
+            "parameters": {
+                "shape": [
+                    1,
+                    2,
+                    8400
+                ],
+                "is_scalar": false,
+                "type": "float32"
+            },
+            "inputs": [],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Add_431_22": {
+            "name": "onnx__Add_431",
+            "op": "slice",
+            "parameters": {
+                "begin": [
+                    0,
+                    2,
+                    0
+                ],
+                "size": [
+                    1,
+                    2,
+                    8400
+                ]
+            },
+            "inputs": [
+                "@bboxes_29:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Sub_428_24": {
+            "name": "onnx__Sub_428",
+            "op": "slice",
+            "parameters": {
+                "begin": [
+                    0,
+                    0,
+                    0
+                ],
+                "size": [
+                    1,
+                    2,
+                    8400
+                ]
+            },
+            "inputs": [
+                "@bboxes_29:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.316_27": {
+            "name": "input.316",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 128,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_384_36_onnx__Conv_385_28:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "bboxes_29": {
+            "name": "bboxes",
+            "op": "reshape",
+            "parameters": {
+                "shape": [
+                    1,
+                    4,
+                    8400
+                ]
+            },
+            "inputs": [
+                "@bboxes_29_acuity_mark_perm_243:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Reshape_411_30": {
+            "name": "onnx__Reshape_411",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 1,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 1,
+                "ksize_w": 1,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 0,
+                "pad_w": 0,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "inputs": [
+                "@onnx__Reshape_411_30_acuity_mark_perm_244:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.300_31": {
+            "name": "input.300",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 128,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_356_39_onnx__Conv_357_38:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.308_33": {
+            "name": "input.308",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 128,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_370_41_onnx__Conv_371_40:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.312_35": {
+            "name": "input.312",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 128,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_309_43_onnx__Conv_310_42:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Transpose_409_44": {
+            "name": "onnx__Transpose_409",
+            "op": "softmax",
+            "parameters": {
+                "sf_axis": 3,
+                "beta": 1.0
+            },
+            "inputs": [
+                "@onnx__Softmax_408_51:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.296_45": {
+            "name": "input.296",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 128,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_271_53_onnx__Conv_272_46:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.304_47": {
+            "name": "input.304",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 128,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_290_55_onnx__Conv_291_48:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.268_49": {
+            "name": "input.268",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 512,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 1,
+                "ksize_w": 1,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 0,
+                "pad_w": 0,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "inputs": [
+                "@input.264_50:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.264_50": {
+            "name": "input.264",
+            "op": "concat",
+            "parameters": {
+                "dim": 3
+            },
+            "inputs": [
+                "@onnx__Concat_299_79:out0",
+                "@onnx__Concat_299_79:out1",
+                "@onnx__Mul_305_63_onnx__Concat_306_56:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Softmax_408_51": {
+            "name": "onnx__Softmax_408",
+            "op": "permute",
+            "parameters": {
+                "perm": [
+                    0,
+                    3,
+                    1,
+                    2
+                ]
+            },
+            "inputs": [
+                "@onnx__Transpose_407_57:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.204_52": {
+            "name": "input.204",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 128,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 1,
+                "ksize_w": 1,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 0,
+                "pad_w": 0,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "inputs": [
+                "@input.200_58:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.236_54": {
+            "name": "input.236",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 256,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 1,
+                "ksize_w": 1,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 0,
+                "pad_w": 0,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "inputs": [
+                "@input.232_60:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Transpose_407_57": {
+            "name": "onnx__Transpose_407",
+            "op": "reshape",
+            "parameters": {
+                "shape": [
+                    1,
+                    4,
+                    16,
+                    8400
+                ]
+            },
+            "inputs": [
+                "@onnx__Reshape_354_64:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.200_58": {
+            "name": "input.200",
+            "op": "concat",
+            "parameters": {
+                "dim": 3
+            },
+            "inputs": [
+                "@onnx__Concat_261_84:out0",
+                "@onnx__Concat_261_84:out1",
+                "@onnx__Mul_267_66_onnx__Concat_268_59:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.232_60": {
+            "name": "input.232",
+            "op": "concat",
+            "parameters": {
+                "dim": 3
+            },
+            "inputs": [
+                "@onnx__Concat_280_86:out0",
+                "@onnx__Concat_280_86:out1",
+                "@onnx__Mul_286_68_onnx__Concat_287_61:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.260_62": {
+            "name": "input.260",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 256,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_302_70_onnx__Conv_303_69:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Reshape_354_64": {
+            "name": "onnx__Reshape_354",
+            "op": "concat",
+            "parameters": {
+                "dim": -1
+            },
+            "inputs": [
+                "@onnx__Concat_325_71:out0",
+                "@onnx__Concat_339_72:out0",
+                "@onnx__Concat_353_73:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.196_65": {
+            "name": "input.196",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 64,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_264_75_onnx__Conv_265_74:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.228_67": {
+            "name": "input.228",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 128,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_283_77_onnx__Conv_284_76:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Concat_325_71": {
+            "name": "onnx__Concat_325",
+            "op": "reshape",
+            "parameters": {
+                "shape": [
+                    1,
+                    64,
+                    -1
+                ]
+            },
+            "inputs": [
+                "@onnx__Concat_325_71_acuity_mark_perm_245:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Concat_339_72": {
+            "name": "onnx__Concat_339",
+            "op": "reshape",
+            "parameters": {
+                "shape": [
+                    1,
+                    64,
+                    -1
+                ]
+            },
+            "inputs": [
+                "@onnx__Concat_339_72_acuity_mark_perm_246:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Concat_353_73": {
+            "name": "onnx__Concat_353",
+            "op": "reshape",
+            "parameters": {
+                "shape": [
+                    1,
+                    64,
+                    -1
+                ]
+            },
+            "inputs": [
+                "@onnx__Concat_353_73_acuity_mark_perm_247:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.256_78": {
+            "name": "input.256",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 256,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Concat_299_79:out1"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Concat_299_79": {
+            "name": "onnx__Concat_299",
+            "op": "split",
+            "parameters": {
+                "dim": 3,
+                "slices": [
+                    256
+                ],
+                "unstack": false
+            },
+            "inputs": [
+                "@onnx__Mul_297_94_onnx__Split_298_87:out0"
+            ],
+            "outputs": [
+                "out0",
+                "out1"
+            ]
+        },
+        "onnx__Reshape_318_80": {
+            "name": "onnx__Reshape_318",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 64,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 1,
+                "ksize_w": 1,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 0,
+                "pad_w": 0,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_316_96_onnx__Conv_317_88:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Reshape_332_81": {
+            "name": "onnx__Reshape_332",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 64,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 1,
+                "ksize_w": 1,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 0,
+                "pad_w": 0,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_330_98_onnx__Conv_331_89:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Reshape_346_82": {
+            "name": "onnx__Reshape_346",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 64,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 1,
+                "ksize_w": 1,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 0,
+                "pad_w": 0,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_344_100_onnx__Conv_345_90:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.192_83": {
+            "name": "input.192",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 64,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Concat_261_84:out1"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Concat_261_84": {
+            "name": "onnx__Concat_261",
+            "op": "split",
+            "parameters": {
+                "dim": 3,
+                "slices": [
+                    64
+                ],
+                "unstack": false
+            },
+            "inputs": [
+                "@onnx__Mul_259_102_onnx__Split_260_91:out0"
+            ],
+            "outputs": [
+                "out0",
+                "out1"
+            ]
+        },
+        "input.224_85": {
+            "name": "input.224",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 128,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Concat_280_86:out1"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Concat_280_86": {
+            "name": "onnx__Concat_280",
+            "op": "split",
+            "parameters": {
+                "dim": 3,
+                "slices": [
+                    128
+                ],
+                "unstack": false
+            },
+            "inputs": [
+                "@onnx__Mul_278_104_onnx__Split_279_92:out0"
+            ],
+            "outputs": [
+                "out0",
+                "out1"
+            ]
+        },
+        "input.248_93": {
+            "name": "input.248",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 512,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 1,
+                "ksize_w": 1,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 0,
+                "pad_w": 0,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "inputs": [
+                "@input.244_105:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.276_95": {
+            "name": "input.276",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 64,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_313_108_onnx__Conv_314_107:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.284_97": {
+            "name": "input.284",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 64,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_327_110_onnx__Conv_328_109:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.292_99": {
+            "name": "input.292",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 64,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_341_112_onnx__Conv_342_111:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.184_101": {
+            "name": "input.184",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 128,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 1,
+                "ksize_w": 1,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 0,
+                "pad_w": 0,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "inputs": [
+                "@input.180_113:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.216_103": {
+            "name": "input.216",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 256,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 1,
+                "ksize_w": 1,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 0,
+                "pad_w": 0,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "inputs": [
+                "@input.212_115:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.244_105": {
+            "name": "input.244",
+            "op": "concat",
+            "parameters": {
+                "dim": 3
+            },
+            "inputs": [
+                "@onnx__Mul_293_133_onnx__Concat_294_117:out0",
+                "@onnx__Mul_229_119_onnx__Resize_230_106:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.180_113": {
+            "name": "input.180",
+            "op": "concat",
+            "parameters": {
+                "dim": 3
+            },
+            "inputs": [
+                "@onnx__Concat_256_126:out0",
+                "@onnx__Mul_174_128_onnx__Conv_175_114:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.212_115": {
+            "name": "input.212",
+            "op": "concat",
+            "parameters": {
+                "dim": 3
+            },
+            "inputs": [
+                "@onnx__Mul_274_142_onnx__Concat_275_129:out0",
+                "@onnx__Mul_250_131_onnx__Resize_251_116:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.148_118": {
+            "name": "input.148",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 512,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 1,
+                "ksize_w": 1,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 0,
+                "pad_w": 0,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "inputs": [
+                "@input.144_121:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.272_120": {
+            "name": "input.272",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 64,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_271_53_onnx__Conv_272_46:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.144_121": {
+            "name": "input.144",
+            "op": "concat",
+            "parameters": {
+                "dim": 3
+            },
+            "inputs": [
+                "@onnx__Mul_222_136_onnx__MaxPool_223_134:out0",
+                "@onnx__MaxPool_224_135:out0",
+                "@onnx__MaxPool_225_125:out0",
+                "@onnx__Concat_226_123:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.280_122": {
+            "name": "input.280",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 64,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_290_55_onnx__Conv_291_48:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Concat_226_123": {
+            "name": "onnx__Concat_226",
+            "op": "pooling",
+            "parameters": {
+                "padding": "VALID",
+                "type": "MAX",
+                "ksize_h": 5,
+                "ksize_w": 5,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 2,
+                "pad_w": 2,
+                "round_type": "floor",
+                "pad_method": "padding_const",
+                "pad": [
+                    2,
+                    2,
+                    2,
+                    2
+                ],
+                "count_include_pad": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__MaxPool_225_125:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.288_124": {
+            "name": "input.288",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 64,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_309_43_onnx__Conv_310_42:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__MaxPool_225_125": {
+            "name": "onnx__MaxPool_225",
+            "op": "pooling",
+            "parameters": {
+                "padding": "VALID",
+                "type": "MAX",
+                "ksize_h": 5,
+                "ksize_w": 5,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 2,
+                "pad_w": 2,
+                "round_type": "floor",
+                "pad_method": "padding_const",
+                "pad": [
+                    2,
+                    2,
+                    2,
+                    2
+                ],
+                "count_include_pad": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__MaxPool_224_135:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Concat_256_126": {
+            "name": "onnx__Concat_256",
+            "op": "image_resize",
+            "parameters": {
+                "type": "nearest",
+                "new_size": [
+                    80,
+                    80
+                ],
+                "align_corners": false,
+                "half_pixel": false
+            },
+            "inputs": [
+                "@onnx__Mul_250_131_onnx__Resize_251_116:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.68_127": {
+            "name": "input.68",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 128,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 1,
+                "ksize_w": 1,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 0,
+                "pad_w": 0,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "inputs": [
+                "@input.64_139:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.176_130": {
+            "name": "input.176",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 256,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 1,
+                "ksize_w": 1,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 0,
+                "pad_w": 0,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "inputs": [
+                "@input.172_143:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.240_132": {
+            "name": "input.240",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 256,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 2,
+                "stride_w": 2,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_290_55_onnx__Conv_291_48:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__MaxPool_224_135": {
+            "name": "onnx__MaxPool_224",
+            "op": "pooling",
+            "parameters": {
+                "padding": "VALID",
+                "type": "MAX",
+                "ksize_h": 5,
+                "ksize_w": 5,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 2,
+                "pad_w": 2,
+                "round_type": "floor",
+                "pad_method": "padding_const",
+                "pad": [
+                    2,
+                    2,
+                    2,
+                    2
+                ],
+                "count_include_pad": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_222_136_onnx__MaxPool_223_134:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.140_137": {
+            "name": "input.140",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 256,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 1,
+                "ksize_w": 1,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 0,
+                "pad_w": 0,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_219_149_onnx__Conv_220_138:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.64_139": {
+            "name": "input.64",
+            "op": "concat",
+            "parameters": {
+                "dim": 3
+            },
+            "inputs": [
+                "@onnx__Concat_156_170:out0",
+                "@onnx__Concat_156_170:out1",
+                "@input.52_150:out0",
+                "@onnx__Concat_171_140:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Concat_171_140": {
+            "name": "onnx__Concat_171",
+            "op": "add",
+            "inputs": [
+                "@input.52_150:out0",
+                "@onnx__Mul_169_153_onnx__Add_170_152:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.208_141": {
+            "name": "input.208",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 128,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 2,
+                "stride_w": 2,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_271_53_onnx__Conv_272_46:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.172_143": {
+            "name": "input.172",
+            "op": "concat",
+            "parameters": {
+                "dim": 3
+            },
+            "inputs": [
+                "@onnx__Concat_240_165:out0",
+                "@onnx__Concat_240_165:out1",
+                "@onnx__Mul_246_145_onnx__Concat_247_144:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.168_146": {
+            "name": "input.168",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 128,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_243_157_onnx__Conv_244_147:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.136_148": {
+            "name": "input.136",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 512,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 1,
+                "ksize_w": 1,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 0,
+                "pad_w": 0,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "inputs": [
+                "@input.132_158:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.52_150": {
+            "name": "input.52",
+            "op": "add",
+            "inputs": [
+                "@onnx__Concat_156_170:out1",
+                "@onnx__Mul_162_161_onnx__Add_163_151:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.60_154": {
+            "name": "input.60",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 64,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_166_164_onnx__Conv_167_155:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.164_156": {
+            "name": "input.164",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 128,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Concat_240_165:out1"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.132_158": {
+            "name": "input.132",
+            "op": "concat",
+            "parameters": {
+                "dim": 3
+            },
+            "inputs": [
+                "@onnx__Concat_208_188:out0",
+                "@onnx__Concat_208_188:out1",
+                "@onnx__Concat_216_159:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Concat_216_159": {
+            "name": "onnx__Concat_216",
+            "op": "add",
+            "inputs": [
+                "@onnx__Concat_208_188:out1",
+                "@onnx__Mul_214_175_onnx__Add_215_167:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.48_160": {
+            "name": "input.48",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 64,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_159_169_onnx__Conv_160_162:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.56_163": {
+            "name": "input.56",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 64,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@input.52_150:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Concat_240_165": {
+            "name": "onnx__Concat_240",
+            "op": "split",
+            "parameters": {
+                "dim": 3,
+                "slices": [
+                    128
+                ],
+                "unstack": false
+            },
+            "inputs": [
+                "@onnx__Mul_238_173_onnx__Split_239_166:out0"
+            ],
+            "outputs": [
+                "out0",
+                "out1"
+            ]
+        },
+        "input.44_168": {
+            "name": "input.44",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 64,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Concat_156_170:out1"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Concat_156_170": {
+            "name": "onnx__Concat_156",
+            "op": "split",
+            "parameters": {
+                "dim": 3,
+                "slices": [
+                    64
+                ],
+                "unstack": false
+            },
+            "inputs": [
+                "@onnx__Mul_154_177_onnx__Split_155_171:out0"
+            ],
+            "outputs": [
+                "out0",
+                "out1"
+            ]
+        },
+        "input.156_172": {
+            "name": "input.156",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 256,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 1,
+                "ksize_w": 1,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 0,
+                "pad_w": 0,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "inputs": [
+                "@input.152_178:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.128_174": {
+            "name": "input.128",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 256,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_211_181_onnx__Conv_212_180:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.36_176": {
+            "name": "input.36",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 128,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 1,
+                "ksize_w": 1,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 0,
+                "pad_w": 0,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_151_183_onnx__Conv_152_182:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.152_178": {
+            "name": "input.152",
+            "op": "concat",
+            "parameters": {
+                "dim": 3
+            },
+            "inputs": [
+                "@onnx__Concat_235_184:out0",
+                "@onnx__Mul_200_186_onnx__Conv_201_179:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Concat_235_184": {
+            "name": "onnx__Concat_235",
+            "op": "image_resize",
+            "parameters": {
+                "type": "nearest",
+                "new_size": [
+                    40,
+                    40
+                ],
+                "align_corners": false,
+                "half_pixel": false
+            },
+            "inputs": [
+                "@onnx__Mul_229_119_onnx__Resize_230_106:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.108_185": {
+            "name": "input.108",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 256,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 1,
+                "ksize_w": 1,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 0,
+                "pad_w": 0,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "inputs": [
+                "@input.104_192:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.124_187": {
+            "name": "input.124",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 256,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Concat_208_188:out1"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Concat_208_188": {
+            "name": "onnx__Concat_208",
+            "op": "split",
+            "parameters": {
+                "dim": 3,
+                "slices": [
+                    256
+                ],
+                "unstack": false
+            },
+            "inputs": [
+                "@onnx__Mul_206_201_onnx__Split_207_194:out0"
+            ],
+            "outputs": [
+                "out0",
+                "out1"
+            ]
+        },
+        "input.32_189": {
+            "name": "input.32",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 128,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 2,
+                "stride_w": 2,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_148_191_onnx__Conv_149_190:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.104_192": {
+            "name": "input.104",
+            "op": "concat",
+            "parameters": {
+                "dim": 3
+            },
+            "inputs": [
+                "@onnx__Concat_182_219:out0",
+                "@onnx__Concat_182_219:out1",
+                "@input.92_197:out0",
+                "@onnx__Concat_197_193:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Concat_197_193": {
+            "name": "onnx__Concat_197",
+            "op": "add",
+            "inputs": [
+                "@input.92_197:out0",
+                "@onnx__Mul_195_206_onnx__Add_196_199:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.28_195": {
+            "name": "input.28",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 64,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 1,
+                "ksize_w": 1,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 0,
+                "pad_w": 0,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "inputs": [
+                "@input.24_196:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.24_196": {
+            "name": "input.24",
+            "op": "concat",
+            "parameters": {
+                "dim": 3
+            },
+            "inputs": [
+                "@onnx__Concat_137_227:out0",
+                "@onnx__Concat_137_227:out1",
+                "@onnx__Concat_145_202:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.92_197": {
+            "name": "input.92",
+            "op": "add",
+            "inputs": [
+                "@onnx__Concat_182_219:out1",
+                "@onnx__Mul_188_204_onnx__Add_189_198:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.116_200": {
+            "name": "input.116",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 512,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 1,
+                "ksize_w": 1,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 0,
+                "pad_w": 0,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_203_208_onnx__Conv_204_207:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Concat_145_202": {
+            "name": "onnx__Concat_145",
+            "op": "add",
+            "inputs": [
+                "@onnx__Concat_137_227:out1",
+                "@onnx__Mul_143_217_onnx__Add_144_209:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.88_203": {
+            "name": "input.88",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 128,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_185_211_onnx__Conv_186_210:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.100_205": {
+            "name": "input.100",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 128,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_192_213_onnx__Conv_193_212:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.112_214": {
+            "name": "input.112",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 512,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 2,
+                "stride_w": 2,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_200_186_onnx__Conv_201_179:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.96_215": {
+            "name": "input.96",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 128,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@input.92_197:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.20_216": {
+            "name": "input.20",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 32,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_140_223_onnx__Conv_141_222:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.84_218": {
+            "name": "input.84",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 128,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Concat_182_219:out1"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Concat_182_219": {
+            "name": "onnx__Concat_182",
+            "op": "split",
+            "parameters": {
+                "dim": 3,
+                "slices": [
+                    128
+                ],
+                "unstack": false
+            },
+            "inputs": [
+                "@onnx__Mul_180_221_onnx__Split_181_220:out0"
+            ],
+            "outputs": [
+                "out0",
+                "out1"
+            ]
+        },
+        "input.76_224": {
+            "name": "input.76",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 256,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 1,
+                "ksize_w": 1,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 0,
+                "pad_w": 0,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_177_229_onnx__Conv_178_225:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.16_226": {
+            "name": "input.16",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 32,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Concat_137_227:out1"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Concat_137_227": {
+            "name": "onnx__Concat_137",
+            "op": "split",
+            "parameters": {
+                "dim": 3,
+                "slices": [
+                    32
+                ],
+                "unstack": false
+            },
+            "inputs": [
+                "@onnx__Mul_135_231_onnx__Split_136_230:out0"
+            ],
+            "outputs": [
+                "out0",
+                "out1"
+            ]
+        },
+        "input.72_228": {
+            "name": "input.72",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 256,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 2,
+                "stride_w": 2,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_174_128_onnx__Conv_175_114:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.8_232": {
+            "name": "input.8",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 64,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 1,
+                "ksize_w": 1,
+                "stride_h": 1,
+                "stride_w": 1,
+                "pad_h": 0,
+                "pad_w": 0,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    0,
+                    0,
+                    0,
+                    0
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_132_235_onnx__Conv_133_233:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input.4_234": {
+            "name": "input.4",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 64,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 2,
+                "stride_w": 2,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@onnx__Mul_129_237_onnx__Conv_130_236:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input_238": {
+            "name": "input",
+            "op": "convolution",
+            "parameters": {
+                "padding_mode": "CONSTANT",
+                "weights": 32,
+                "padding": "VALID",
+                "bias": true,
+                "group_number": 1,
+                "regularize": false,
+                "ksize_h": 3,
+                "ksize_w": 3,
+                "stride_h": 2,
+                "stride_w": 2,
+                "pad_h": 1,
+                "pad_w": 1,
+                "dilation": [
+                    1,
+                    1,
+                    1,
+                    1
+                ],
+                "pad_method": "padding_const",
+                "pad": [
+                    1,
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "inputs": [
+                "@input_238_acuity_mark_perm_248:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "images_239": {
+            "name": "images",
+            "op": "input",
+            "parameters": {
+                "size": "",
+                "channels": 1,
+                "shape": [
+                    1,
+                    3,
+                    640,
+                    640
+                ],
+                "is_scalar": false,
+                "type": "float32"
+            },
+            "inputs": [],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Concat_368_9_acuity_mark_perm_240": {
+            "name": "onnx__Concat_368_9_acuity_mark_perm",
+            "op": "permute",
+            "parameters": {
+                "perm": [
+                    0,
+                    3,
+                    1,
+                    2
+                ]
+            },
+            "inputs": [
+                "@onnx__Reshape_361_16:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Concat_382_10_acuity_mark_perm_241": {
+            "name": "onnx__Concat_382_10_acuity_mark_perm",
+            "op": "permute",
+            "parameters": {
+                "perm": [
+                    0,
+                    3,
+                    1,
+                    2
+                ]
+            },
+            "inputs": [
+                "@onnx__Reshape_375_17:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Concat_396_11_acuity_mark_perm_242": {
+            "name": "onnx__Concat_396_11_acuity_mark_perm",
+            "op": "permute",
+            "parameters": {
+                "perm": [
+                    0,
+                    3,
+                    1,
+                    2
+                ]
+            },
+            "inputs": [
+                "@onnx__Reshape_389_18:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "bboxes_29_acuity_mark_perm_243": {
+            "name": "bboxes_29_acuity_mark_perm",
+            "op": "permute",
+            "parameters": {
+                "perm": [
+                    0,
+                    3,
+                    1,
+                    2
+                ]
+            },
+            "inputs": [
+                "@onnx__Reshape_411_30:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Reshape_411_30_acuity_mark_perm_244": {
+            "name": "onnx__Reshape_411_30_acuity_mark_perm",
+            "op": "permute",
+            "parameters": {
+                "perm": [
+                    0,
+                    2,
+                    1,
+                    3
+                ]
+            },
+            "inputs": [
+                "@onnx__Transpose_409_44:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Concat_325_71_acuity_mark_perm_245": {
+            "name": "onnx__Concat_325_71_acuity_mark_perm",
+            "op": "permute",
+            "parameters": {
+                "perm": [
+                    0,
+                    3,
+                    1,
+                    2
+                ]
+            },
+            "inputs": [
+                "@onnx__Reshape_318_80:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Concat_339_72_acuity_mark_perm_246": {
+            "name": "onnx__Concat_339_72_acuity_mark_perm",
+            "op": "permute",
+            "parameters": {
+                "perm": [
+                    0,
+                    3,
+                    1,
+                    2
+                ]
+            },
+            "inputs": [
+                "@onnx__Reshape_332_81:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Concat_353_73_acuity_mark_perm_247": {
+            "name": "onnx__Concat_353_73_acuity_mark_perm",
+            "op": "permute",
+            "parameters": {
+                "perm": [
+                    0,
+                    3,
+                    1,
+                    2
+                ]
+            },
+            "inputs": [
+                "@onnx__Reshape_346_82:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "input_238_acuity_mark_perm_248": {
+            "name": "input_238_acuity_mark_perm",
+            "op": "permute",
+            "parameters": {
+                "perm": [
+                    0,
+                    2,
+                    3,
+                    1
+                ]
+            },
+            "inputs": [
+                "@images_239:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_387_20_onnx__Conv_388_19": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.316_27:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_359_32_onnx__Conv_360_25": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.300_31:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_373_34_onnx__Conv_374_26": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.308_33:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_384_36_onnx__Conv_385_28": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.312_35:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_356_39_onnx__Conv_357_38": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.296_45:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_370_41_onnx__Conv_371_40": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.304_47:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_309_43_onnx__Conv_310_42": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.268_49:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_271_53_onnx__Conv_272_46": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.204_52:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_290_55_onnx__Conv_291_48": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.236_54:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_305_63_onnx__Concat_306_56": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.260_62:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_267_66_onnx__Concat_268_59": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.196_65:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_286_68_onnx__Concat_287_61": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.228_67:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_302_70_onnx__Conv_303_69": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.256_78:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_264_75_onnx__Conv_265_74": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.192_83:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_283_77_onnx__Conv_284_76": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.224_85:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_297_94_onnx__Split_298_87": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.248_93:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_316_96_onnx__Conv_317_88": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.276_95:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_330_98_onnx__Conv_331_89": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.284_97:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_344_100_onnx__Conv_345_90": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.292_99:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_259_102_onnx__Split_260_91": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.184_101:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_278_104_onnx__Split_279_92": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.216_103:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_313_108_onnx__Conv_314_107": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.272_120:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_327_110_onnx__Conv_328_109": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.280_122:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_341_112_onnx__Conv_342_111": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.288_124:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_229_119_onnx__Resize_230_106": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.148_118:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_174_128_onnx__Conv_175_114": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.68_127:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_250_131_onnx__Resize_251_116": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.176_130:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_293_133_onnx__Concat_294_117": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.240_132:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_222_136_onnx__MaxPool_223_134": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.140_137:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_274_142_onnx__Concat_275_129": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.208_141:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_246_145_onnx__Concat_247_144": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.168_146:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_219_149_onnx__Conv_220_138": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.136_148:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_169_153_onnx__Add_170_152": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.60_154:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_243_157_onnx__Conv_244_147": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.164_156:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_162_161_onnx__Add_163_151": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.48_160:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_166_164_onnx__Conv_167_155": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.56_163:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_159_169_onnx__Conv_160_162": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.44_168:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_238_173_onnx__Split_239_166": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.156_172:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_214_175_onnx__Add_215_167": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.128_174:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_154_177_onnx__Split_155_171": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.36_176:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_211_181_onnx__Conv_212_180": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.124_187:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_151_183_onnx__Conv_152_182": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.32_189:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_200_186_onnx__Conv_201_179": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.108_185:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_148_191_onnx__Conv_149_190": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.28_195:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_206_201_onnx__Split_207_194": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.116_200:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_188_204_onnx__Add_189_198": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.88_203:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_195_206_onnx__Add_196_199": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.100_205:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_203_208_onnx__Conv_204_207": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.112_214:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_185_211_onnx__Conv_186_210": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.84_218:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_192_213_onnx__Conv_193_212": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.96_215:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_143_217_onnx__Add_144_209": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.20_216:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_180_221_onnx__Split_181_220": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.76_224:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_140_223_onnx__Conv_141_222": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.16_226:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_177_229_onnx__Conv_178_225": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.72_228:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_135_231_onnx__Split_136_230": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.8_232:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_132_235_onnx__Conv_133_233": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input.4_234:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        },
+        "onnx__Mul_129_237_onnx__Conv_130_236": {
+            "name": "swish",
+            "op": "swish",
+            "parameters": {
+                "beta": 1.0
+            },
+            "inputs": [
+                "@input_238:out0"
+            ],
+            "outputs": [
+                "out0"
+            ]
+        }
+    },
+    "quantize_info": {}
+}
