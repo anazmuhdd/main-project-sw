@@ -9,7 +9,8 @@ __pycache__/
 *.zip
 Detect-Indian-Currency-*/
 wandb/
-
+ven/
+ai-sdk/examples/yolov5
 # Data and SDKs
 docker_data/
 docker_images_v2.0.x/
