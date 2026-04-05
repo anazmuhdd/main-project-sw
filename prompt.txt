@@ -1,0 +1,46 @@
+so we need to create the backend for the board that is:
+
+the board will stream you the camera frrames along with the mode, which is contolled by the button., and will speak out the results
+through the speaker.
+
+
+There are three modes currently right now:
+1. Currency module with models yolo26 and yolov5 which are present in the models folder.(models\yolov5_currency.pt
+models\yolo26_seg.pt)
+2. Object detection models with yolo26 and yolo5(models/yolo26s.pt, backend\yolov5_object_detection)
+3. OCR(either via nvidia api or local ollama)
+
+So we will be streaming frames and the button, initially the mode will be object detection one, while pressing the switch it will
+chamnge the modes respectively.
+
+each mode explained:
+Currency mode:
+We will be getting frmases, and will be running prediction, calculate the sum by summating the notes with multiplication if two or more are presnet too,  we need pass what are predicted to the llm: that is either use 
+qwen3.5:2b or use nvidia nim qwen3 version for it, forgood response for visually impaired people and must be a very good one.use 
+well defined prompts for those, okay?.
+
+Object detection mode:
+
+same as to the currency detection modulr, scene explanation is importnad., make use of position of the objects too for better scene explanation, use right side left side and all for those,
+make use of the position of objects and their relative positions too for better scene explanation. must give an very good proper adequate
+response for visually impaired people and must be a very good one.use 
+well defined prompts for those, okay?.
+
+OCR mode:
+
+We will be capturing a frame at a time, and will be running OCR on it, we need to pass the text to the llm for it to read it out loud for the visually impaired people, must give an very good proper adequate
+response for visually impaired people and must be a very good one.use 
+well defined prompts for those, okay?.
+
+
+
+stream every respinse from the llm to the board, and the board will play it out loud for the visually impaired people, must give an very good proper adequate
+response for visually impaired people and must be a very good one.use 
+well defined prompts for those, okay?.
+
+create requirements tect for board and also for the laptop tpo. nothing is intsalled in the board okay?
+cretae each module in seperate file in the backend with folder module and defie all fumctions under it, and use
+those functions in the main server for the processess. okay?
+
+so implment a detailled implementation plan and also give me verdict in the chat.
+

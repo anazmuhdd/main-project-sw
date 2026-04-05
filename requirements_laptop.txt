@@ -1,0 +1,13 @@
+# Laptop requirements
+fastapi
+uvicorn[standard]
+websockets
+numpy
+opencv-python
+pillow
+torch
+torchvision
+requests
+ollama
+python-multipart
+ultralytics
