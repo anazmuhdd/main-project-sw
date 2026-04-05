@@ -36,17 +36,24 @@ class OCRModule:
 
     def get_llm_prompt(self, ocr_text):
         """
-        Prompt for the LLM to summarize the OCR text.
+        Prompt for the LLM to summarize the OCR text for a visually impaired user.
         """
         if not ocr_text or len(ocr_text.strip()) == 0:
-            return "No readable text was found in the image."
+            return "I am sorry, but I cannot find any readable text in front of you."
             
         return f"""
-        Role: Intelligent reader for a visually impaired person.
-        OCR Text Detected: {ocr_text}
-        Action:
-        1. Summarize the text found based on the object (e.g., if it's a menu, a sign, or a label).
-        2. Specifically tell the user what they are looking at and read the most important parts.
-        3. Keep the most helpful information (like expiry dates or warnings) prominent.
-        Example Output: "This is a food label. It says it's a pack of bread, and the best before date is October 10th."
-        Your Response:"""
+        Role: You are an intelligent and clear-voiced reader for a visually impaired person.
+        Context: The user is pointing a camera at a document, sign, or object with text.
+        Extracted Text: {ocr_text}
+        
+        Task:
+        1. Summarize the text detected. Identify what type of object it is (e.g., menu, medicine bottle, street sign).
+        2. Keep the information well-structured. Read only the most critical parts first (like the product name, price, or warning).
+        3. Be conversational and helpful.
+
+        IMPORTANT:
+        - Output ONLY the natural speech for the user.
+        - DO NOT output any internal reasoning, chain-of-thought, or <thought> tags.
+        - Avoid technical terms like "OCR Text Detected" or "Action".
+        
+        Response:"""

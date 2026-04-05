@@ -62,7 +62,7 @@ def run_detection(
 
     # ── 2. Model ───────────────────────────────────────────────────────────
     weights_path = str((BACKEND_ROOT / weights).resolve())
-    print(f"Loading model: {weights_path}")
+    # print(f"Loading model: {weights_path}")
     model = DetectMultiBackend(weights_path, device=device, dnn=False, fp16=half)
     stride = int(model.stride)
     names = model.names                          # {0:'n10', 1:'n100', …}
@@ -71,15 +71,15 @@ def run_detection(
 
     # Warmup
     model.warmup(imgsz=(1, 3, imgsz, imgsz))
-    print(f"Model loaded — classes: {names}")
-    print(f"Segmentation model detected (nm=32).")
+    # print(f"Model loaded — classes: {names}")
+    # print(f"Segmentation model detected (nm=32).")
 
     # ── 3. Webcam ──────────────────────────────────────────────────────────
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         print("ERROR: Could not open webcam.")
         return
-    print("Live feed active.  Press 'q' to stop.")
+    # print("Live feed active.  Press 'q' to stop.")
 
     # ── 4. Inference loop ──────────────────────────────────────────────────
     while cap.isOpened():
