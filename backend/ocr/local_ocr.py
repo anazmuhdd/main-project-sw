@@ -2,7 +2,7 @@ import ollama
 import os
 import sys
 
-def run_local_ocr(image_path, model="glm-ocr:latest"):
+def run_local_ocr(image_path, model="deepseek-ocr:latest"):
     """
     Performs OCR on an image using a local Ollama model.
     """
@@ -12,7 +12,6 @@ def run_local_ocr(image_path, model="glm-ocr:latest"):
 
     print(f"--- Local OCR Inference ---")
     print(f"Model: {model}")
-    print(f"Image: {image_path}")
     
     try:
         # Request OCR from Ollama

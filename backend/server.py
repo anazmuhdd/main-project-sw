@@ -55,6 +55,7 @@ async def vision_stream(websocket: WebSocket):
     global last_detection_state, last_ai_processed_time
     await websocket.accept()
     current_mode = "ObjectDetection"
+    cv2.namedWindow("Server Stream", cv2.WINDOW_NORMAL)
     
     try:
         while True:
@@ -75,14 +76,15 @@ async def vision_stream(websocket: WebSocket):
             # Logic branch based on mode
             current_state = None
             result_prompt = ""
+            raw_detections = []
             
             if current_mode == "ObjectDetection":
-                detections = objects.analyze_scene(frame)
+                detections, raw_detections = objects.analyze_scene(frame)
                 current_state = sorted(detections)
                 result_prompt = objects.get_llm_prompt(detections) if detections else None
                 
             elif current_mode == "Currency":
-                desc, total = currency.detect_and_sum(frame)
+                desc, total, raw_detections = currency.detect_and_sum(frame)
                 current_state = desc if total > 0 else None
                 result_prompt = currency.get_llm_prompt(desc) if total > 0 else None
                 
@@ -97,6 +99,18 @@ async def vision_stream(websocket: WebSocket):
                 current_state = text
                 result_prompt = ocr.get_llm_prompt(text)
 
+            # Draw detections on the frame for server-side visualization
+            for det in raw_detections:
+                bbox = det["bbox"]
+                label = det["label"]
+                conf = det["conf"]
+                cv2.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (0, 255, 0), 2)
+                cv2.putText(frame, f"{label} {conf:.2f}", (bbox[0], bbox[1] - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+
+            # Display the frame
+            cv2.imshow("Server Stream", frame)
+            cv2.waitKey(1)
 
             inference_time = time.time() - start_time - preprocess_time
             # print(f"[Server] Inference complete: {inference_time:.4f}s")

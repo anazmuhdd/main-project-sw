@@ -65,6 +65,7 @@ class ObjectModule:
     def analyze_scene(self, frame):
         """
         Detects objects and calculates spatial orientation.
+        Returns: (objects_detected, raw_detections)
         """
         img = self.preprocess(frame)
         pred = self.model(img, augment=False, visualize=False)
@@ -72,6 +73,7 @@ class ObjectModule:
         
         img_width = frame.shape[1]
         objects_detected = []
+        raw_detections = []
         
         for i, det in enumerate(pred):
             if len(det):
@@ -90,8 +92,15 @@ class ObjectModule:
                         
                     print(f"[Objects] Detected: {label} ({conf:.2f}) {position}")
                     objects_detected.append(f"{label} {position}")
+                    
+                    # Store raw detection for server-side visualization
+                    raw_detections.append({
+                        "bbox": [int(x) for x in xyxy],
+                        "label": label,
+                        "conf": float(conf)
+                    })
             
-        return objects_detected
+        return objects_detected, raw_detections
 
     def get_llm_prompt(self, objects_data):
         scene_info = ", ".join(objects_data) if objects_data else "no clear objects"

@@ -105,16 +105,27 @@ class CurrencyModule:
         # 4. Result formatting
         if not detected_notes:
             print("[Currency] No currency found.")
-            return "No currency detected.", 0
+            return "No currency detected.", 0, []
             
         summary_parts = []
+        raw_detections = []
         for val in sorted(counts.keys()):
             count = counts[val]
             summary_parts.append(f"{count} {val} rupee note{'s' if count > 1 else ''}")
             
+        # Reprocess for raw_detections list
+        for i, det in enumerate(pred):
+            if len(det):
+                for *xyxy, conf, cls in reversed(det[:, :6]):
+                    raw_detections.append({
+                        "bbox": [int(x) for x in xyxy],
+                        "label": self.names[int(cls)],
+                        "conf": float(conf)
+                    })
+
         summary = ", ".join(summary_parts)
         print(f"[Currency] Sum: {total} | Breakdown: {summary}")
-        return f"You are holding {summary}. The total amount is {total} rupees.", total
+        return f"You are holding {summary}. The total amount is {total} rupees.", total, raw_detections
 
     def get_llm_prompt(self, description):
         """Constructs a prompt for a visually impaired user."""

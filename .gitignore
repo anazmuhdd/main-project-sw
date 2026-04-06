@@ -6,6 +6,8 @@ yolo26m.pt
 yolo26_currency_run/
 __pycache__/
 *.onnx
+Testimages
+testimages object/
 *.zip
 Detect-Indian-Currency-*/
 wandb/
