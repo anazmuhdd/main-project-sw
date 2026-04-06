@@ -7,13 +7,21 @@ import subprocess
 import json
 import os
 from periphery import GPIO # Specific for Radxa periphery library
+import logging
+import coloredlogs
+
+# Configure Logging
+logger = logging.getLogger("BoardClient")
+coloredlogs.install(level='INFO', logger=logger, fmt='%(asctime)s %(name)s[%(process)d] %(levelname)s %(message)s')
+
+
 
 # --- Configuration ---
-LAPTOP_IP = "192.168.1.5" # UPDATE THIS TO YOUR LAPTOP IP
+LAPTOP_IP = "172.20.10.2"
 SERVER_URL = f"ws://{LAPTOP_IP}:8000/vision"
 
 # USB Camera Configuration (as requested)
-CAMERA_INDEX = "/dev/video2"
+CAMERA_INDEX = "/dev/video0"
 CAP_DRIVER = cv2.CAP_V4L2
 
 # GPIO Configuration (from your gpio_test.py)
@@ -21,103 +29,186 @@ GPIO_CHIP = "/dev/gpiochip0"
 GPIO_LINE = 108   # PD12
 
 # Piper TTS Configuration
-PIPER_MODEL = "en_US-lessac-medium.onnx"
-PIPER_EXE = "./piper/piper" # Path to your piper binary
+BASE_PROJECT_DIR = "/home/radxa/Project/main-project-sw"
+PIPER_EXE = f"{BASE_PROJECT_DIR}/ven/bin/piper" 
+PIPER_MODEL = f"{BASE_PROJECT_DIR}/backend/tts/models/en_GB-alba-medium.onnx"
+
+def get_sample_rate(model_path):
+    json_path = model_path + ".json"
+    if os.path.exists(json_path):
+        try:
+            with open(json_path, 'r') as f:
+                data = json.load(f)
+                return data.get("audio", {}).get("sample_rate", 22050)
+        except Exception:
+            pass
+    return 22050
+
+PIPER_SAMPLE_RATE = get_sample_rate(PIPER_MODEL)
+
+tts_queue = asyncio.Queue()
+
+# Removed play_voice in favor of a persistent worker in tts_worker
+
+
+async def tts_worker():
+    """Background worker to process TTS queue with a persistent piper pipeline."""
+    logger.info("TTS Worker started with persistent pipeline.")
+    
+    cmd = f"'{PIPER_EXE}' --model '{PIPER_MODEL}' --output-raw | aplay -r {PIPER_SAMPLE_RATE} -f S16_LE -t raw"
+    
+    process = None
+    
+    async def start_tts_process():
+        logger.info("Starting persistent TTS pipeline...")
+        return await asyncio.create_subprocess_shell(
+            cmd,
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.PIPE
+        )
+
+    process = await start_tts_process()
+    
+    try:
+        while True:
+            text = await tts_queue.get()
+            if text:
+                try:
+                    # Check if process is still alive
+                    if process.returncode is not None:
+                        logger.warning("TTS Process died, restarting...")
+                        process = await start_tts_process()
+                    
+                    if process.stdin:
+                        # Append newline to trigger piper processing
+                        process.stdin.write((text + "\n").encode('utf-8'))
+                        await process.stdin.drain()
+                        logger.debug(f"TTS Persistent: Sent chunk to stdin: {text}")
+                except Exception as e:
+                    logger.error(f"Error in persistent TTS stream: {e}")
+                    process = await start_tts_process()
+            tts_queue.task_done()
+    except Exception as e:
+        logger.error(f"TTS Worker Exception: {e}")
+    finally:
+        if process and process.stdin:
+            process.stdin.close()
+            await process.wait()
+
 
 async def board_main():
-    print(f"[Board] Starting AI Vision Client...")
+    logger.info("Starting AI Vision Client...")
+
     
     # Initialize Camera
-    print(f"[Board] Initializing camera at {CAMERA_INDEX}...")
+    logger.info(f"Initializing camera at {CAMERA_INDEX}...")
     cap = cv2.VideoCapture(CAMERA_INDEX, CAP_DRIVER)
     if not cap.isOpened():
-        print(f"[Board] Error: Could not open camera at {CAMERA_INDEX}")
+        logger.error(f"Could not open camera at {CAMERA_INDEX}")
         return
-    print("[Board] Camera initialized successfully.")
+    logger.info("Camera initialized successfully.")
 
     # Initialize GPIO Button
-    print(f"[Board] Initializing GPIO pin {GPIO_LINE} on {GPIO_CHIP}...")
+    logger.info(f"Initializing GPIO pin {GPIO_LINE} on {GPIO_CHIP}...")
     try:
         button = GPIO(GPIO_CHIP, GPIO_LINE, "in")
-        print("[Board] GPIO initialized successfully.")
+        logger.info("GPIO initialized successfully.")
     except Exception as e:
-        print(f"[Board] Error initializing GPIO: {e}")
+        logger.error(f"Error initializing GPIO: {e}")
         return
+
 
     current_mode_idx = 0 # 0: ObjectDetection, 1: Currency, 2: OCR
     modes = ["ObjectDetection", "Currency", "OCR"]
     
     # Main Streaming Loop
     try:
-        print(f"[Board] Connecting to AI Server at {SERVER_URL}...")
+        logger.info(f"Connecting to AI Server at {SERVER_URL}...")
         async with websockets.connect(SERVER_URL) as websocket:
-            print("[Board] Connection established.")
+            logger.info("Connection established.")
             
+            # Start TTS Worker
+            tts_task = asyncio.create_task(tts_worker())
+            
+            tts_buffer = ""
             while cap.isOpened():
-                frame_start = time.time()
-                
                 # 1. Read Button for Mode Switching
                 btn_val = button.read()
-                # Assuming button.read() returns 1 if pressed, 
-                # but based on your test it could be inverted
                 if btn_val != 0: 
                     current_mode_idx = (current_mode_idx + 1) % 3
-                    print(f"\n[Board] *** MODE SWITCHED TO: {modes[current_mode_idx]} ***")
+                    logger.warning(f"*** MODE SWITCHED TO: {modes[current_mode_idx]} ***")
                     time.sleep(0.3) # Simple hardware debounce
 
                 # 2. Capture Frame
                 ret, frame = cap.read()
                 if not ret:
-                    print("[Board] Error: Failed to grab frame.")
+                    logger.error("Failed to grab frame.")
                     break
                 
-                # Optional: Resize for speed if needed
-                frame = cv2.resize(frame, (640, 480))
+                frame = cv2.resize(frame, (320, 240))
                 
                 # 3. Encode Frame
-                encode_start = time.time()
                 _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 50])
-                encode_time = time.time() - encode_start
                 
                 # 4. Pack and Send
-                # Protocol: First byte byte is mode_idx
                 payload = bytes([current_mode_idx]) + buffer.tobytes()
                 await websocket.send(payload)
-                print(f"[Board] Sent frame (Encode: {encode_time:.4f}s)", end="\r")
+                print(f"[Board] Streaming {modes[current_mode_idx]}...", end="\r")
 
                 # 5. Handle Incoming AI Responses (Asynchronous)
                 try:
                     # Non-blocking check for responses
-                    response_raw = await asyncio.wait_for(websocket.recv(), timeout=0.01)
+                    response_raw = await asyncio.wait_for(websocket.recv(), timeout=0.001)
                     data = json.loads(response_raw)
                     
                     if data['type'] == 'text':
-                        text = data['content']
-                        print(f"\n[Board] Received Speech: {text}")
-                        # Immediately pipe to Piper TTS
-                        try:
-                            # Start piper process
-                            p = subprocess.Popen([PIPER_EXE, "--model", PIPER_MODEL, "--output_raw"],
-                                                stdin=subprocess.PIPE,
-                                                stdout=subprocess.DEVNULL)
-                            p.communicate(input=text.encode())
-                            print(f"[Board] Played audio chunk.")
-                        except Exception as e:
-                            print(f"[Board] TTS Player Error: {e}")
+                        # 1. Print chunk immediately (Live feedback)
+                        content = data['content']
+                        print(content, end="", flush=True)
+                        
+                        # 2. Buffer for phrase-based TTS (continuity fix)
+                        tts_buffer += content
+                        
+                        # Find the last punctuation mark to split the phrase
+                        punctuation_marks = ".!?,;:"
+                        last_punc_idx = -1
+                        for i, char in enumerate(tts_buffer):
+                            if char in punctuation_marks:
+                                last_punc_idx = i
+                        
+                        if last_punc_idx != -1:
+                            phrase = tts_buffer[:last_punc_idx+1].strip()
+                            if phrase:
+                                tts_queue.put_nowait(phrase)
+                            tts_buffer = tts_buffer[last_punc_idx+1:].lstrip()
+                        elif len(tts_buffer) > 40 and " " in tts_buffer:
+                            # Force a split if the phrase is getting too long (e.g. > 40 chars)
+                            last_space_idx = tts_buffer.rfind(" ")
+                            phrase = tts_buffer[:last_space_idx].strip()
+                            if phrase:
+                                tts_queue.put_nowait(phrase)
+                            tts_buffer = tts_buffer[last_space_idx+1:].lstrip()
                             
                     elif data['type'] == 'status' and data['content'] == 'done':
-                        print("[Board] Logic: End of response stream.")
+                        # Final flush of the buffer
+                        if tts_buffer.strip():
+                            tts_queue.put_nowait(tts_buffer.strip())
+                        tts_buffer = ""
+                        print("\n") # Newline after response ends
+                        logger.info("Response ended.")
                         
                 except asyncio.TimeoutError:
-                    # No response yet, continue streaming
                     pass
+
                 
     except Exception as e:
-        print(f"\n[Board] Connection Error: {e}")
+        logger.error(f"Connection Error: {e}")
     finally:
         cap.release()
         button.close()
-        print("[Board] Client shut down.")
+        logger.info("Client shut down.")
+
 
 if __name__ == "__main__":
     try:
