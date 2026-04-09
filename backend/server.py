@@ -56,7 +56,8 @@ async def vision_stream(websocket: WebSocket):
     global last_detection_state, last_ai_processed_time
     await websocket.accept()
     current_mode = "ObjectDetection"
-    cv2.namedWindow("Server Stream", cv2.WINDOW_NORMAL)
+    cv2.namedWindow("Raw Board Feed", cv2.WINDOW_NORMAL)
+    cv2.namedWindow("Detection View", cv2.WINDOW_NORMAL)
     
     # Latency fix: Use a single-slot buffer for the latest frame
     latest_frame_data = {"data": None, "mode_idx": 0}
@@ -74,6 +75,14 @@ async def vision_stream(websocket: WebSocket):
                     latest_frame_data["mode_idx"] = data[0]
                     latest_frame_data["data"] = data[1:]
                     frame_ready_event.set()
+                    
+                    # Update RAW window in real-time as frames arrive
+                    frame_data = np.frombuffer(data[1:], dtype=np.uint8)
+                    raw_frame = cv2.imdecode(frame_data, cv2.IMREAD_COLOR)
+                    if raw_frame is not None:
+                        cv2.imshow("Raw Board Feed", raw_frame)
+                        cv2.waitKey(1)
+                        
                 elif "text" in raw_data:
                     msg = json.loads(raw_data["text"])
                     if msg.get("type") == "ready":
@@ -89,14 +98,18 @@ async def vision_stream(websocket: WebSocket):
     
     try:
         while not receiver_task.done():
-            # Wait for BOTH a new frame AND the board to be READY
+            # Wait for BOTH a new frame AND the board to be READY for processing
             try:
-                # Polling frequency for the readiness
-                await asyncio.wait_for(asyncio.gather(frame_ready_event.wait(), board_ready_event.wait()), timeout=0.1)
+                # We wait for a new frame. The receiver task updates the Raw window.
+                await asyncio.wait_for(frame_ready_event.wait(), timeout=0.1)
                 frame_ready_event.clear()
             except asyncio.TimeoutError:
                 continue
             
+            # Logic: If board is NOT ready, we skip the AI branch but keep updating the raw feed (done in task)
+            if not board_ready_event.is_set():
+                continue
+
             start_time = time.time()
             
             # Retrieve the latest frame and mode
@@ -144,17 +157,19 @@ async def vision_stream(websocket: WebSocket):
                 current_state = text
                 result_prompt = ocr.get_llm_prompt(text)
 
-            # Draw detections on the frame
+            # Draw detections on the frame for the SECOND window
             for det in raw_detections:
                 bbox = det["bbox"]
                 label = det["label"]
                 conf = det["conf"]
-                cv2.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (0, 255, 0), 2)
-                cv2.putText(frame, f"{label} {conf:.2f}", (bbox[0], bbox[1] - 10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                # Only draw high confidence detections
+                if conf >= 0.50:
+                    cv2.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (0, 255, 0), 2)
+                    cv2.putText(frame, f"{label} {conf:.2f}", (bbox[0], bbox[1] - 10),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-            # Display the frame
-            cv2.imshow("Server Stream", frame)
+            # Display the processed frame (Window 2)
+            cv2.imshow("Detection View", frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
@@ -167,7 +182,7 @@ async def vision_stream(websocket: WebSocket):
             
             # Smart Trigger: Trigger if state changed OR if a long time (60s) has passed as a reminder
             if result_prompt and (state_changed or time_elapsed > 60.0):
-                board_ready_event.clear() # Board is NO LONGER READY until speech finishes
+                board_ready_event.clear() # Board is NO LONGER READY until full speech finishes
                 print(f"\n[LLM Prompt]: {result_prompt}")
                 print("[LLM Response]: ", end="", flush=True)
                 last_detection_state = current_state
