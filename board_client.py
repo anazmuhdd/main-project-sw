@@ -154,6 +154,12 @@ async def board_main():
                 # 4. Pack and Send
                 payload = bytes([current_mode_idx]) + buffer.tobytes()
                 await websocket.send(payload)
+                
+                # 4.5 Local Visualization (Requested)
+                cv2.imshow("Board Feed (Real-time)", frame)
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+                    
                 print(f"[Board] Streaming {modes[current_mode_idx]}...", end="\r")
 
                 # 5. Handle Incoming AI Responses (Asynchronous)
