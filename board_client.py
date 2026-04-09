@@ -9,8 +9,10 @@ import os
 
 BASE_PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 
+import sys
 from periphery import GPIO # Specific for Radxa periphery library
 import logging
+import logging.handlers
 import coloredlogs
 
 # Configure Logging
