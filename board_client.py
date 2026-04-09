@@ -70,30 +70,31 @@ async def tts_worker():
     )
 
     async def synthesize_and_play(text: str):
-        """Send one sentence to Piper, collect audio, play it, and WAIT for completion."""
+        """Send complete text to Piper, collect ALL audio, play it, await completion."""
         piper_proc.stdin.write((text + "\n").encode("utf-8"))
         await piper_proc.stdin.drain()
         
-        # Collect audio bytes for this sentence.
-        # 400ms timeout is safe for sentences up to ~20 words.
-        # The previous 80ms was too short, causing audio to bleed into the next sentence.
+        # Read ALL audio chunks from Piper.
+        # Use 1.0s timeout — Piper on ARM hardware can take up to 800ms to generate
+        # audio for a full sentence. Stop reading when Piper goes silent.
         audio_chunks = []
         while True:
             try:
-                chunk = await asyncio.wait_for(piper_proc.stdout.read(16384), timeout=0.4)
+                chunk = await asyncio.wait_for(piper_proc.stdout.read(16384), timeout=1.0)
                 if chunk:
                     audio_chunks.append(chunk)
                 else:
                     break
             except asyncio.TimeoutError:
-                break  # Piper stopped producing — sentence is fully generated
+                break  # Piper finished generating — silence means done
         
         if not audio_chunks:
             return
         
         audio_data = b"".join(audio_chunks)
         
-        # Play with a fresh aplay and AWAIT it — exact sync, no estimation needed.
+        # Play via a dedicated aplay and AWAIT COMPLETION.
+        # This is the only reliable way to know when the speaker goes silent.
         aplay_proc = await asyncio.create_subprocess_exec(
             "aplay", "-r", str(PIPER_SAMPLE_RATE), "-f", "S16_LE", "-t", "raw", "-",
             stdin=asyncio.subprocess.PIPE,
@@ -102,7 +103,7 @@ async def tts_worker():
         )
         aplay_proc.stdin.write(audio_data)
         aplay_proc.stdin.close()
-        await aplay_proc.wait()  # ← TRUE SYNC: blocks until speaker is physically done
+        await aplay_proc.wait()  # TRUE SYNC — blocks until speaker is physically done
 
     # --- WARM-UP: Pre-heat Piper so first real sentence has no startup lag ---
     logger.info("TTS Worker: Warming up Piper engine (first-request pre-heat)...")
@@ -231,33 +232,19 @@ async def board_main():
                     if data['type'] == 'text':
                         content = data['content']
                         print(content, end="", flush=True)
-                        
-                        # Fluid TTS: Buffered to group words into natural phrases
+                        # Accumulate the FULL response — do NOT send partial phrases to TTS.
+                        # Only the complete response will be sent to Piper to avoid cutoff.
                         tts_buffer += content
-                        punctuation_marks = ".!?,;:"
-                        split_idx = -1
-                        for i, char in enumerate(tts_buffer):
-                            if char in punctuation_marks:
-                                split_idx = i
-                                break
-                        
-                        if split_idx != -1:
-                            phrase = tts_buffer[:split_idx+1]
-                            tts_queue.put_nowait(phrase + " ") # Space for continuity
-                            tts_buffer = tts_buffer[split_idx+1:].lstrip()
-                        elif len(tts_buffer) > 40 and " " in tts_buffer:
-                            last_space = tts_buffer.rfind(" ")
-                            phrase = tts_buffer[:last_space]
-                            tts_queue.put_nowait(phrase + " ")
-                            tts_buffer = tts_buffer[last_space+1:]
                             
                     elif data['type'] == 'status' and data['content'] == 'done':
-                        # Final flush: send remaining buffered text (with newline to flush Piper)
-                        if tts_buffer.strip():
-                            tts_queue.put_nowait(tts_buffer.strip() + "\n")
-                        tts_buffer = ""
                         print("\n")
                         logger.info("Response ended. Waiting for speech to finish...")
+                        
+                        # Send the FULL accumulated response as one unit to Piper.
+                        # This is the key fix: no partial phrases means no cutoff bugs.
+                        if tts_buffer.strip():
+                            tts_queue.put_nowait(tts_buffer.strip())
+                        tts_buffer = ""
                         
                         # Sync logic: Wait for TTS to finish before signaling READY
                         tts_queue.put_nowait("SIGNAL_READY")
