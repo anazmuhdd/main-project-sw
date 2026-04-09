@@ -156,9 +156,15 @@ async def board_main():
                 await websocket.send(payload)
                 
                 # 4.5 Local Visualization (Requested)
-                cv2.imshow("Board Feed (Real-time)", frame)
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
+                try:
+                    cv2.imshow("Board Feed (Real-time)", frame)
+                    if cv2.waitKey(1) & 0xFF == ord('q'):
+                        break
+                except Exception as e:
+                    # Catch-all to prevent any GUI related error from killing the client
+                    if not hasattr(board_main, "_gui_error_logged"):
+                        logger.warning(f"Local GUI visualization failed: {e}. Continuing in headless mode...")
+                        board_main._gui_error_logged = True
                     
                 print(f"[Board] Streaming {modes[current_mode_idx]}...", end="\r")
 
@@ -203,10 +209,18 @@ async def board_main():
                             tts_queue.put_nowait(tts_buffer.strip())
                         tts_buffer = ""
                         print("\n") # Newline after response ends
-                        logger.info("Response ended.")
+                        logger.info("Response ended. Waiting for speech to finish...")
+                        
+                        # Sync logic: Wait for TTS to finish before signaling READY
+                        await tts_queue.join()
+                        await websocket.send(json.dumps({"type": "ready"}))
+                        logger.info("Board is ready for next frame.")
                         
                 except asyncio.TimeoutError:
                     pass
+                except Exception as e:
+                    # Catch-all for websocket or parsing errors in this block
+                    logger.error(f"Error handling response: {e}")
 
                 
     except Exception as e:
