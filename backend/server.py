@@ -57,21 +57,49 @@ async def vision_stream(websocket: WebSocket):
     current_mode = "ObjectDetection"
     cv2.namedWindow("Server Stream", cv2.WINDOW_NORMAL)
     
+    # Latency fix: Use a single-slot buffer for the latest frame
+    latest_frame_data = {"data": None, "mode_idx": 0}
+    frame_ready_event = asyncio.Event()
+
+    async def frame_receiver():
+        """Continuously drains the websocket and keeps only the latest frame."""
+        try:
+            while True:
+                data = await websocket.receive_bytes()
+                latest_frame_data["mode_idx"] = data[0]
+                latest_frame_data["data"] = data[1:]
+                frame_ready_event.set()
+        except WebSocketDisconnect:
+            print("[Server] Receiver: Board connection lost.")
+        except Exception as e:
+            print(f"[Server] Receiver Error: {e}")
+
+    # Start the receiver task
+    receiver_task = asyncio.create_task(frame_receiver())
+    
     try:
         while True:
-            start_time = time.time()
-            data = await websocket.receive_bytes()
+            # Wait for the receiver task to signal a new frame
+            await frame_ready_event.wait()
+            frame_ready_event.clear()
             
-            mode_idx = data[0]
+            start_time = time.time()
+            
+            # Retrieve the latest frame and mode
+            mode_idx = latest_frame_data["mode_idx"]
+            raw_bytes = latest_frame_data["data"]
+            
             if mode_idx == 0: current_mode = "ObjectDetection"
             elif mode_idx == 1: current_mode = "Currency"
             elif mode_idx == 2: current_mode = "OCR"
             
-            frame_data = np.frombuffer(data[1:], dtype=np.uint8)
+            frame_data = np.frombuffer(raw_bytes, dtype=np.uint8)
             frame = cv2.imdecode(frame_data, cv2.IMREAD_COLOR)
             
+            if frame is None:
+                continue
+
             preprocess_time = time.time() - start_time
-            # print(f"\n[Server] New frame in mode: {current_mode} (Preprocess: {preprocess_time:.4f}s)")
             
             # Logic branch based on mode
             current_state = None
@@ -89,17 +117,16 @@ async def vision_stream(websocket: WebSocket):
                 result_prompt = currency.get_llm_prompt(desc) if total > 0 else None
                 
             elif current_mode == "OCR":
-                # Lazy-load OCR model on first call to save startup time
                 global ocr
                 if ocr is None:
                     print("[Server] Initializing OCR Module (first use)...")
                     ocr = OCRModule()
                 
-                text = ocr.perform_ocr(data[1:])
+                text = ocr.perform_ocr(raw_bytes)
                 current_state = text
                 result_prompt = ocr.get_llm_prompt(text)
 
-            # Draw detections on the frame for server-side visualization
+            # Draw detections on the frame
             for det in raw_detections:
                 bbox = det["bbox"]
                 label = det["label"]
@@ -110,12 +137,12 @@ async def vision_stream(websocket: WebSocket):
 
             # Display the frame
             cv2.imshow("Server Stream", frame)
-            cv2.waitKey(1)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
 
             inference_time = time.time() - start_time - preprocess_time
-            # print(f"[Server] Inference complete: {inference_time:.4f}s")
 
-            # DECISION: Should we trigger a new AI session (LLM + TTS)?
+            # Trigger AI/LLM
             now = time.time()
             if result_prompt and (current_state != last_detection_state or (now - last_ai_processed_time) > AI_DEBOUNCE_INTERVAL):
                 print(f"\n[LLM Prompt]: {result_prompt}")
@@ -129,16 +156,16 @@ async def vision_stream(websocket: WebSocket):
                     print(chunk, end="", flush=True)
                     full_response += chunk
                 
-                print("\n") # Newline after response
+                print("\n")
                 await websocket.send_text(json.dumps({"type": "status", "content": "done"}))
             else:
-                # Still send a heartbeat to keep the board socket alive
                 await websocket.send_text(json.dumps({"type": "heartbeat"}))
 
-    except WebSocketDisconnect:
-        print("[Server] Board connection lost.")
     except Exception as e:
-        print(f"[Server] Error: {e}")
+        print(f"[Server] Main loop error: {e}")
+    finally:
+        receiver_task.cancel()
+        cv2.destroyAllWindows()
         await websocket.close()
 
 
