@@ -8,6 +8,7 @@ import numpy as np
 import cv2
 import json
 import os
+import asyncio
 
 app = FastAPI()
 
@@ -78,10 +79,13 @@ async def vision_stream(websocket: WebSocket):
     receiver_task = asyncio.create_task(frame_receiver())
     
     try:
-        while True:
-            # Wait for the receiver task to signal a new frame
-            await frame_ready_event.wait()
-            frame_ready_event.clear()
+        while not receiver_task.done():
+            # Wait for either a new frame or the receiver task to finish
+            try:
+                await asyncio.wait_for(frame_ready_event.wait(), timeout=0.1)
+                frame_ready_event.clear()
+            except asyncio.TimeoutError:
+                continue
             
             start_time = time.time()
             
@@ -89,6 +93,9 @@ async def vision_stream(websocket: WebSocket):
             mode_idx = latest_frame_data["mode_idx"]
             raw_bytes = latest_frame_data["data"]
             
+            if raw_bytes is None:
+                continue
+
             if mode_idx == 0: current_mode = "ObjectDetection"
             elif mode_idx == 1: current_mode = "Currency"
             elif mode_idx == 2: current_mode = "OCR"
@@ -99,6 +106,7 @@ async def vision_stream(websocket: WebSocket):
             if frame is None:
                 continue
 
+            # ... (Rest of processing) ...
             preprocess_time = time.time() - start_time
             
             # Logic branch based on mode
@@ -164,9 +172,14 @@ async def vision_stream(websocket: WebSocket):
     except Exception as e:
         print(f"[Server] Main loop error: {e}")
     finally:
-        receiver_task.cancel()
+        if not receiver_task.done():
+            receiver_task.cancel()
         cv2.destroyAllWindows()
-        await websocket.close()
+        # Only attempt to close if not already closed
+        try:
+            await websocket.close()
+        except:
+            pass
 
 
 if __name__ == "__main__":
