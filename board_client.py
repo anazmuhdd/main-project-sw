@@ -152,31 +152,46 @@ async def tts_worker():
             text = await tts_queue.get()
 
             if text == "SIGNAL_READY":
-                logger.debug("[TTS►SYNC] SIGNAL_READY received — waiting for Piper to finish generating...")
-                # ── Wait for Piper to finish generating (bytes stop growing) ──
+                logger.debug("[TTS►SYNC] SIGNAL_READY received — waiting for Piper to START producing audio...")
+
+                # ── STEP 1: Wait until Piper has actually started producing audio ──
+                # This is the fix for the race condition:
+                # SIGNAL_READY can arrive before Piper generates any bytes.
+                # We gate here until bytes_piped > 0 (up to 8s timeout).
+                wait_start = time.time()
+                while bytes_piped == 0:
+                    if time.time() - wait_start > 8.0:
+                        logger.warning("[TTS►SYNC] Timeout waiting for Piper audio — no bytes after 8s")
+                        break
+                    await asyncio.sleep(0.05)
+
+                logger.debug(f"[TTS►SYNC] Piper started — initial bytes: {bytes_piped}B (waited {time.time()-wait_start:.2f}s)")
+
+                # ── STEP 2: Wait for Piper to STOP producing (byte count stable) ──
                 stable_count = 0
                 prev_bytes = bytes_piped
-                while stable_count < 2:
+                while stable_count < 3:  # 300ms of no new bytes = generation done
                     await asyncio.sleep(0.1)
                     if bytes_piped == prev_bytes:
                         stable_count += 1
                     else:
                         stable_count = 0
                         prev_bytes = bytes_piped
+
                 logger.debug(f"[TTS►SYNC] Piper settled — total audio piped: {bytes_piped}B (~{bytes_piped/BYTES_PER_SEC:.2f}s)")
 
-                # ── Wait until aplay physically finishes speaking ──────────
+                # ── STEP 3: Wait until aplay physically finishes playing ──────────
                 if stream_start_time is not None and bytes_piped > 0:
                     finish_time = stream_start_time + (bytes_piped / BYTES_PER_SEC)
                     wait_for = finish_time - time.time() + 0.15
                     if wait_for > 0:
                         logger.info(
-                            f"[TTS►SYNC] aplay finish in {wait_for:.2f}s  "
+                            f"[TTS►SYNC] Waiting {wait_for:.2f}s for speaker to finish  "
                             f"(bytes={bytes_piped}  duration={bytes_piped/BYTES_PER_SEC:.2f}s)"
                         )
                         await asyncio.sleep(wait_for)
                     else:
-                        logger.debug("[TTS►SYNC] aplay already done (wait_for <= 0)")
+                        logger.debug(f"[TTS►SYNC] aplay already done (wait_for={wait_for:.2f}s)")
 
                 logger.info("[TTS►SYNC] Speaker finished. Resetting counters.")
                 # ── Reset for next narration ───────────────────────────────
