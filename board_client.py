@@ -6,6 +6,9 @@ import time
 import subprocess
 import json
 import os
+
+BASE_PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
+
 from periphery import GPIO # Specific for Radxa periphery library
 import logging
 import coloredlogs
@@ -50,7 +53,6 @@ GPIO_CHIP = "/dev/gpiochip0"
 GPIO_LINE = 108   # PD12
 
 # Piper TTS Configuration
-BASE_PROJECT_DIR = "/home/radxa/Project/main-project-sw"
 PIPER_EXE = f"{BASE_PROJECT_DIR}/ven/bin/piper" 
 PIPER_MODEL = f"{BASE_PROJECT_DIR}/backend/tts/models/en_GB-alba-medium.onnx"
 
