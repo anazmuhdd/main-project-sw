@@ -108,6 +108,10 @@ async def tts_worker():
             text = await tts_queue.get()
             if text == "SIGNAL_READY":
                 # Special marker: wait until all bytes currently in pipe are played
+                if start_play_time is None:
+                    tts_queue.task_done()
+                    continue
+                    
                 current_time = time.time()
                 total_duration = total_bytes_expected / bytes_per_sec
                 finish_time = start_play_time + total_duration
@@ -117,20 +121,25 @@ async def tts_worker():
                     logger.info(f"Sync: Waiting {wait_time:.2f}s for audio to finish playing...")
                     await asyncio.sleep(wait_time)
                 
+                # Reset for next session
+                start_play_time = None
+                total_bytes_expected = 0
+                
                 # Signal the server that we are ready for the next frame
-                # This is handled in the main loop after tts_queue.join()
                 tts_queue.task_done()
                 continue
                 
             if text and piper_proc.stdin:
-                # Reset play timing if queue was empty for a while
-                if tts_queue.empty() and (time.time() - (start_play_time + (total_bytes_expected/bytes_per_sec))) > 0.5:
-                    # Sync start_play_time to 'now' if there was a long gap
-                    # However, to keep it continuous, we just keep adding to total_bytes
-                    pass
-                
-                if total_bytes_expected == 0:
+                # Initialize start_play_time if this is the first chunk of a new session
+                if start_play_time is None:
                     start_play_time = time.time()
+                
+                # Reset play timing if queue was empty for a while
+                # (Only if audio has already started)
+                if tts_queue.empty() and start_play_time is not None:
+                    audio_progress_time = total_bytes_expected / bytes_per_sec
+                    if (time.time() - (start_play_time + audio_progress_time)) > 0.5:
+                        pass # Could sync here if needed
                 
                 piper_proc.stdin.write((text + "\n").encode('utf-8'))
                 await piper_proc.stdin.drain()

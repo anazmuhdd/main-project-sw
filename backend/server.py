@@ -145,16 +145,17 @@ async def vision_stream(websocket: WebSocket):
                 if detections:
                     items_str = ", ".join(detections)
                     result_prompt = f"""
-        Role: Helpful professional AI vision assistant for a blind person.
+        ACT AS A SENSORY SYSTEM. Your only job is to narrate the provided camera data. 
         Input Data: {items_str}
         
-        Task:
-        1. Narrate exactly what is seen in a natural, spatial way.
-        2. Be extremely concise.
-        3. Do NOT mention any objects that are not in the Input Data.
-        4. Focus on where the items are relative to the user (left, right, front).
+        Rules:
+        - Describe only the items in the Input Data.
+        - Be natural and spatial (left, right, front).
+        - DO NOT say you are an AI.
+        - DO NOT say you have no eyes.
+        - Keep it to 1-2 short sentences maximum.
         
-        Narrate now:"""
+        System Narration:"""
                 else:
                     result_prompt = None
                 
@@ -199,7 +200,6 @@ async def vision_stream(websocket: WebSocket):
             # Smart Trigger: Trigger if state changed OR if a long time (60s) has passed as a reminder
             if result_prompt and (state_changed or time_elapsed > 60.0):
                 board_ready_event.clear() # Board is NO LONGER READY until full speech finishes
-                print(f"\n[LLM Prompt]: {result_prompt}")
                 print("[LLM Response]: ", end="", flush=True)
                 last_detection_state = current_state
                 last_ai_processed_time = now
