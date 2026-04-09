@@ -52,96 +52,92 @@ tts_queue = asyncio.Queue()
 
 
 async def tts_worker():
-    """Background worker for gapless TTS with accurate audio-finish synchronization."""
-    logger.info("TTS Worker: Initializing gapless pipeline...")
+    """
+    Perfect-sync TTS Worker.
+    Architecture:
+      1. Piper runs PERSISTENTLY (warm, never re-initialized).
+      2. At startup, a warm-up call is made so first real speech has ZERO delay.
+      3. For each sentence: send to Piper → collect audio bytes → play with a
+         dedicated `aplay` that we AWAIT → exact sync, no estimation needed.
+    """
+    logger.info("TTS Worker: Starting persistent Piper engine...")
     
-    # 1. Start Piper persistently
-    piper_cmd = [PIPER_EXE, "--model", PIPER_MODEL, "--output-raw"]
     piper_proc = await asyncio.create_subprocess_exec(
-        *piper_cmd,
+        PIPER_EXE, "--model", PIPER_MODEL, "--output-raw",
         stdin=asyncio.subprocess.PIPE,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.DEVNULL
     )
-    
-    # 2. Start aplay persistently to receive Piper's raw output
-    aplay_cmd = ["aplay", "-r", str(PIPER_SAMPLE_RATE), "-f", "S16_LE", "-t", "raw", "-"]
-    aplay_proc = await asyncio.create_subprocess_exec(
-        *aplay_cmd,
-        stdin=asyncio.subprocess.PIPE,
-        stdout=asyncio.subprocess.DEVNULL,
-        stderr=asyncio.subprocess.DEVNULL
-    )
-    
-    # Trackers for synchronization
-    bytes_per_sec = PIPER_SAMPLE_RATE * 2 # 16-bit Mono = 2 bytes per sample
-    total_bytes_expected = 0
-    start_play_time = None
 
-    async def pipe_audio():
-        nonlocal total_bytes_expected, start_play_time
-        try:
-            while True:
-                chunk = await piper_proc.stdout.read(4096)
-                if not chunk: break
-                
-                # Perfect Sync: Update start time only when first audio byte arrived
-                if start_play_time is None:
-                    start_play_time = time.time()
-                elif (time.time() - (start_play_time + (total_bytes_expected/bytes_per_sec))) > 0.5:
-                    # Sync start_play_time to 'now' if there was a long gap
-                    start_play_time = time.time()
-                    total_bytes_expected = 0
+    async def synthesize_and_play(text: str):
+        """Send one sentence to Piper, collect audio, play it, and WAIT for completion."""
+        # Send sentence to Piper. Piper processes one line at a time.
+        piper_proc.stdin.write((text + "\n").encode("utf-8"))
+        await piper_proc.stdin.drain()
+        
+        # Collect audio bytes for this sentence.
+        # Piper generates audio synchronously per line. We read until it stops
+        # producing output for a short burst (silence timeout = 80ms).
+        audio_chunks = []
+        while True:
+            try:
+                chunk = await asyncio.wait_for(piper_proc.stdout.read(8192), timeout=0.08)
+                if chunk:
+                    audio_chunks.append(chunk)
+                else:
+                    break
+            except asyncio.TimeoutError:
+                break  # Piper stopped sending — sentence audio is complete
+        
+        if not audio_chunks:
+            return
+        
+        audio_data = b"".join(audio_chunks)
+        
+        # Play with a fresh aplay. await it → we know EXACTLY when speech ends.
+        aplay_proc = await asyncio.create_subprocess_exec(
+            "aplay", "-r", str(PIPER_SAMPLE_RATE), "-f", "S16_LE", "-t", "raw", "-",
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.DEVNULL
+        )
+        aplay_proc.stdin.write(audio_data)
+        aplay_proc.stdin.close()
+        await aplay_proc.wait()  # ← TRUE SYNC: blocks until speaker is done
 
-                if aplay_proc.stdin:
-                    aplay_proc.stdin.write(chunk)
-                    await aplay_proc.stdin.drain()
-                    total_bytes_expected += len(chunk)
-        except Exception as e:
-            logger.error(f"Audio Pipe Error: {e}")
-
-    # Run the audio piping in background
-    asyncio.create_task(pipe_audio())
+    # --- WARM-UP: Pre-heat Piper so first real sentence has no startup lag ---
+    logger.info("TTS Worker: Warming up Piper engine (first-request pre-heat)...")
+    try:
+        await asyncio.wait_for(synthesize_and_play(" "), timeout=8.0)
+        logger.info("TTS Worker: Piper ready. Zero cold-start latency from now on.")
+    except Exception as e:
+        logger.warning(f"TTS warm-up failed (non-critical): {e}")
 
     try:
         while True:
             text = await tts_queue.get()
+            
             if text == "SIGNAL_READY":
-                # Special marker: wait until all bytes currently in pipe are played
-                if start_play_time is None:
-                    tts_queue.task_done()
-                    continue
-                    
-                current_time = time.time()
-                total_duration = total_bytes_expected / bytes_per_sec
-                finish_time = start_play_time + total_duration
-                wait_time = finish_time - current_time
-                
-                if wait_time > 0:
-                    logger.info(f"Sync: Waiting {wait_time:.2f}s for audio to finish playing...")
-                    await asyncio.sleep(wait_time)
-                
-                # Reset session trackers
-                start_play_time = None
-                total_bytes_expected = 0
-                
+                # All sentences before this marker have been spoken & awaited.
+                # Nothing to do here — just mark done so tts_queue.join() unblocks.
                 tts_queue.task_done()
                 continue
-                
-            if text and piper_proc.stdin:
-                # Fluid Streaming: We don't add newlines here to avoid word breakage
-                piper_proc.stdin.write(text.encode('utf-8'))
-                await piper_proc.stdin.drain()
-                logger.debug(f"TTS SENT: {text}")
+            
+            if text and text.strip():
+                try:
+                    await synthesize_and_play(text)
+                except Exception as e:
+                    logger.error(f"TTS Playback Error: {e}")
             
             tts_queue.task_done()
-            
+
     except Exception as e:
         logger.error(f"TTS Worker Loop Error: {e}")
     finally:
-        for p in [piper_proc, aplay_proc]:
-            try: p.terminate()
-            except: pass
+        try:
+            piper_proc.terminate()
+        except Exception:
+            pass
 
 
 async def board_main():
