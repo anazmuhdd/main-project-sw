@@ -21,21 +21,29 @@ LOG_FILE = os.path.join(LOG_DIR, "board.log")
 log_fmt = "%(asctime)s.%(msecs)03d [%(levelname)s] %(message)s"
 date_fmt = "%Y-%m-%d %H:%M:%S"
 
-import logging.handlers
-logging.basicConfig(
-    level=logging.DEBUG,
-    format=log_fmt,
-    datefmt=date_fmt,
-    handlers=[
-        logging.StreamHandler(),
-        logging.handlers.RotatingFileHandler(
-            LOG_FILE, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
-        ),
-    ],
+# 1. Create Handlers
+# Stream Handler (Terminal) - Set to INFO to avoid noise
+stream_handler = logging.StreamHandler()
+stream_handler.setLevel(logging.INFO)
+stream_handler.setFormatter(logging.Formatter(log_fmt, date_fmt))
+
+# File Handler (Detailed) - Set to DEBUG for diagnostics
+file_handler = logging.handlers.RotatingFileHandler(
+    LOG_FILE, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
 )
+file_handler.setLevel(logging.DEBUG)
+file_handler.setFormatter(logging.Formatter(log_fmt, date_fmt))
+
+# 2. Configure Root Logger
 logger = logging.getLogger("BoardClient")
+logger.setLevel(logging.DEBUG) # Catch everything, handlers will filter
+logger.addHandler(stream_handler)
+logger.addHandler(file_handler)
+
+# 3. Add Colors to Terminal Only
 import coloredlogs
-coloredlogs.install(level='DEBUG', logger=logger, fmt=log_fmt, datefmt=date_fmt)
+coloredlogs.install(level='INFO', logger=logger, fmt=log_fmt, datefmt=date_fmt, stream=sys.stdout)
+
 logger.info(f"=== Board Client Starting — logs → {LOG_FILE} ===")
 
 

@@ -32,18 +32,23 @@ LOG_FILE = os.path.join(LOG_DIR, "server.log")
 log_fmt = "%(asctime)s.%(msecs)03d [%(levelname)s] %(message)s"
 date_fmt = "%Y-%m-%d %H:%M:%S"
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    format=log_fmt,
-    datefmt=date_fmt,
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.handlers.RotatingFileHandler(
-            LOG_FILE, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
-        ),
-    ],
+# 1. Create Handlers
+stream_handler = logging.StreamHandler(sys.stdout)
+stream_handler.setLevel(logging.INFO) # Clean console
+stream_handler.setFormatter(logging.Formatter(log_fmt, date_fmt))
+
+file_handler = logging.handlers.RotatingFileHandler(
+    LOG_FILE, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
 )
+file_handler.setLevel(logging.DEBUG) # Full history
+file_handler.setFormatter(logging.Formatter(log_fmt, date_fmt))
+
+# 2. Configure Root Logger
 logger = logging.getLogger("Server")
+logger.setLevel(logging.DEBUG)
+logger.addHandler(stream_handler)
+logger.addHandler(file_handler)
+
 logger.info(f"=== Server Starting — logs → {LOG_FILE} ===")
 
 # ── Configuration and Paths ───────────────────────────────────────────────────
