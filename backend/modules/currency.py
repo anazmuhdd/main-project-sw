@@ -75,7 +75,7 @@ class CurrencyModule:
         proto = out[1]       # (1, 32, 160, 160)
         
         # 2. NMS (nm=32 for segmentation)
-        pred = non_max_suppression(pred, 0.25, 0.45, classes=None, agnostic=False, max_det=1000, nm=32)
+        pred = non_max_suppression(pred, 0.50, 0.45, classes=None, agnostic=False, max_det=1000, nm=32)
         
         detected_notes = []
         counts = {}

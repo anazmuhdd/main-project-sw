@@ -160,9 +160,13 @@ async def vision_stream(websocket: WebSocket):
 
             inference_time = time.time() - start_time - preprocess_time
 
-            # Trigger AI/LLM
+            # DECISION: Should we trigger a new AI session (LLM + TTS)?
             now = time.time()
-            if result_prompt and (current_state != last_detection_state or (now - last_ai_processed_time) > AI_DEBOUNCE_INTERVAL):
+            state_changed = (current_state != last_detection_state)
+            time_elapsed = (now - last_ai_processed_time)
+            
+            # Smart Trigger: Trigger if state changed OR if a long time (60s) has passed as a reminder
+            if result_prompt and (state_changed or time_elapsed > 60.0):
                 board_ready_event.clear() # Board is NO LONGER READY until speech finishes
                 print(f"\n[LLM Prompt]: {result_prompt}")
                 print("[LLM Response]: ", end="", flush=True)
@@ -178,6 +182,7 @@ async def vision_stream(websocket: WebSocket):
                 print("\n")
                 await websocket.send_text(json.dumps({"type": "status", "content": "done"}))
             else:
+                # If we skipped because board not ready or state same, still heartbeat
                 await websocket.send_text(json.dumps({"type": "heartbeat"}))
 
     except Exception as e:

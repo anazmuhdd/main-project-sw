@@ -69,7 +69,7 @@ class ObjectModule:
         """
         img = self.preprocess(frame)
         pred = self.model(img, augment=False, visualize=False)
-        pred = non_max_suppression(pred, 0.25, 0.45, classes=None, agnostic=False, max_det=1000)
+        pred = non_max_suppression(pred, 0.50, 0.45, classes=None, agnostic=False, max_det=1000)
         
         img_width = frame.shape[1]
         objects_detected = []

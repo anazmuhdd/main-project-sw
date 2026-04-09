@@ -181,7 +181,7 @@ async def board_main():
                         
                         # 2. Buffer for phrase-based TTS (continuity fix)
                         tts_buffer += content
-                        print(f" [Buffer: {tts_buffer}]", end="\r", flush=True)
+                        # print(f" [Buffer: {tts_buffer}]", end="\r", flush=True) # REMOVED: causing truncation
                         
                         # Find the last punctuation mark to split the phrase
                         punctuation_marks = ".!?,;:"
