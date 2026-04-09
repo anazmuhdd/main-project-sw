@@ -71,30 +71,29 @@ async def tts_worker():
 
     async def synthesize_and_play(text: str):
         """Send one sentence to Piper, collect audio, play it, and WAIT for completion."""
-        # Send sentence to Piper. Piper processes one line at a time.
         piper_proc.stdin.write((text + "\n").encode("utf-8"))
         await piper_proc.stdin.drain()
         
         # Collect audio bytes for this sentence.
-        # Piper generates audio synchronously per line. We read until it stops
-        # producing output for a short burst (silence timeout = 80ms).
+        # 400ms timeout is safe for sentences up to ~20 words.
+        # The previous 80ms was too short, causing audio to bleed into the next sentence.
         audio_chunks = []
         while True:
             try:
-                chunk = await asyncio.wait_for(piper_proc.stdout.read(8192), timeout=0.08)
+                chunk = await asyncio.wait_for(piper_proc.stdout.read(16384), timeout=0.4)
                 if chunk:
                     audio_chunks.append(chunk)
                 else:
                     break
             except asyncio.TimeoutError:
-                break  # Piper stopped sending — sentence audio is complete
+                break  # Piper stopped producing — sentence is fully generated
         
         if not audio_chunks:
             return
         
         audio_data = b"".join(audio_chunks)
         
-        # Play with a fresh aplay. await it → we know EXACTLY when speech ends.
+        # Play with a fresh aplay and AWAIT it — exact sync, no estimation needed.
         aplay_proc = await asyncio.create_subprocess_exec(
             "aplay", "-r", str(PIPER_SAMPLE_RATE), "-f", "S16_LE", "-t", "raw", "-",
             stdin=asyncio.subprocess.PIPE,
@@ -103,7 +102,7 @@ async def tts_worker():
         )
         aplay_proc.stdin.write(audio_data)
         aplay_proc.stdin.close()
-        await aplay_proc.wait()  # ← TRUE SYNC: blocks until speaker is done
+        await aplay_proc.wait()  # ← TRUE SYNC: blocks until speaker is physically done
 
     # --- WARM-UP: Pre-heat Piper so first real sentence has no startup lag ---
     logger.info("TTS Worker: Warming up Piper engine (first-request pre-heat)...")
@@ -119,7 +118,19 @@ async def tts_worker():
             
             if text == "SIGNAL_READY":
                 # All sentences before this marker have been spoken & awaited.
-                # Nothing to do here — just mark done so tts_queue.join() unblocks.
+                # Drain any stale text items that might have accumulated
+                # (old responses that were superseded by a newer one).
+                drained = 0
+                while not tts_queue.empty():
+                    try:
+                        stale = tts_queue.get_nowait()
+                        if stale != "SIGNAL_READY":  # Don't drain other markers
+                            tts_queue.task_done()
+                            drained += 1
+                    except asyncio.QueueEmpty:
+                        break
+                if drained:
+                    logger.debug(f"Drained {drained} stale sentence(s) from queue.")
                 tts_queue.task_done()
                 continue
             
@@ -241,11 +252,9 @@ async def board_main():
                             tts_buffer = tts_buffer[last_space+1:]
                             
                     elif data['type'] == 'status' and data['content'] == 'done':
-                        # Final flush with newline to trigger piper speech
+                        # Final flush: send remaining buffered text (with newline to flush Piper)
                         if tts_buffer.strip():
                             tts_queue.put_nowait(tts_buffer.strip() + "\n")
-                        else:
-                            tts_queue.put_nowait("\n")
                         tts_buffer = ""
                         print("\n")
                         logger.info("Response ended. Waiting for speech to finish...")

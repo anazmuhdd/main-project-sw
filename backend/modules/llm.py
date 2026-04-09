@@ -56,10 +56,36 @@ class LLMModule:
                     stream=True,
                     think=False
                 )
+                in_think_block = False
+                buffer = ""
                 for chunk in stream:
                     content = chunk['message']['content']
-                    # Simple filter to skip common thinking tags if they appear despite prompt instructions
-                    if not any(tag in content.lower() for tag in ["<thought>", "</thought>", "thinking..."]):
-                        yield content
+                    buffer += content
+                    # Stateful filter: drop everything inside <think>...</think> blocks
+                    # These can span multiple streaming chunks, so we track state
+                    while True:
+                        if in_think_block:
+                            end = buffer.find("</think>")
+                            if end != -1:
+                                buffer = buffer[end + len("</think>"):]
+                                in_think_block = False
+                            else:
+                                buffer = ""  # discard entire chunk, still inside block
+                                break
+                        else:
+                            start = buffer.find("<think>")
+                            if start != -1:
+                                # Yield text before the think block
+                                before = buffer[:start]
+                                if before:
+                                    yield before
+                                buffer = buffer[start + len("<think>"):]
+                                in_think_block = True
+                            else:
+                                # No think tag — yield entire buffer
+                                if buffer:
+                                    yield buffer
+                                buffer = ""
+                                break
             except Exception as e:
                 yield f"[Local LLM Error]: {e}. Please ensure Ollama is running (`ollama serve`)."
