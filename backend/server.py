@@ -140,24 +140,7 @@ async def vision_stream(websocket: WebSocket):
             if current_mode == "ObjectDetection":
                 detections, raw_detections = objects.analyze_scene(frame)
                 current_state = sorted(detections)
-                
-                # REFINED PROMPT: Strict accuracy, no hallucinations
-                if detections:
-                    items_str = ", ".join(detections)
-                    result_prompt = f"""
-        ACT AS A SENSORY SYSTEM. Your only job is to narrate the provided camera data. 
-        Input Data: {items_str}
-        
-        Rules:
-        - Describe only the items in the Input Data.
-        - Be natural and spatial (left, right, front).
-        - DO NOT say you are an AI.
-        - DO NOT say you have no eyes.
-        - Keep it to 1-2 short sentences maximum.
-        
-        System Narration:"""
-                else:
-                    result_prompt = None
+                result_prompt = objects.get_llm_prompt(detections) if detections else None
                 
             elif current_mode == "Currency":
                 desc, total, raw_detections = currency.detect_and_sum(frame)
@@ -200,6 +183,7 @@ async def vision_stream(websocket: WebSocket):
             # Smart Trigger: Trigger if state changed OR if a long time (60s) has passed as a reminder
             if result_prompt and (state_changed or time_elapsed > 60.0):
                 board_ready_event.clear() # Board is NO LONGER READY until full speech finishes
+                print(f"\n[LLM Prompt]: {result_prompt}")
                 print("[LLM Response]: ", end="", flush=True)
                 last_detection_state = current_state
                 last_ai_processed_time = now
