@@ -76,23 +76,14 @@ async def tts_worker():
     # Trackers for synchronization
     bytes_per_sec = PIPER_SAMPLE_RATE * 2 # 16-bit Mono = 2 bytes per sample
     total_bytes_expected = 0
-    start_play_time = None
+    start_play_time = time.time()
 
     async def pipe_audio():
-        nonlocal total_bytes_expected, start_play_time
+        nonlocal total_bytes_expected
         try:
             while True:
                 chunk = await piper_proc.stdout.read(4096)
                 if not chunk: break
-                
-                # Update start time on first audio chunk if we were idle
-                if start_play_time is None:
-                    start_play_time = time.time()
-                elif (time.time() - (start_play_time + (total_bytes_expected/bytes_per_sec))) > 0.5:
-                    # Sync start_play_time to 'now' if there was a long gap
-                    start_play_time = time.time()
-                    total_bytes_expected = 0
-
                 if aplay_proc.stdin:
                     aplay_proc.stdin.write(chunk)
                     await aplay_proc.stdin.drain()
@@ -108,10 +99,6 @@ async def tts_worker():
             text = await tts_queue.get()
             if text == "SIGNAL_READY":
                 # Special marker: wait until all bytes currently in pipe are played
-                if start_play_time is None:
-                    tts_queue.task_done()
-                    continue
-                    
                 current_time = time.time()
                 total_duration = total_bytes_expected / bytes_per_sec
                 finish_time = start_play_time + total_duration
@@ -121,27 +108,22 @@ async def tts_worker():
                     logger.info(f"Sync: Waiting {wait_time:.2f}s for audio to finish playing...")
                     await asyncio.sleep(wait_time)
                 
-                # Reset for next session
-                start_play_time = None
-                total_bytes_expected = 0
-                
                 # Signal the server that we are ready for the next frame
+                # This is handled in the main loop after tts_queue.join()
                 tts_queue.task_done()
                 continue
                 
             if text and piper_proc.stdin:
-                # Initialize start_play_time if this is the first chunk of a new session
-                if start_play_time is None:
+                # Reset play timing if queue was empty for a while
+                if tts_queue.empty() and (time.time() - (start_play_time + (total_bytes_expected/bytes_per_sec))) > 0.5:
+                    # Sync start_play_time to 'now' if there was a long gap
+                    # However, to keep it continuous, we just keep adding to total_bytes
+                    pass
+                
+                if total_bytes_expected == 0:
                     start_play_time = time.time()
                 
-                # Reset play timing if queue was empty for a while
-                if tts_queue.empty() and start_play_time is not None:
-                    audio_progress_time = total_bytes_expected / bytes_per_sec
-                    if (time.time() - (start_play_time + audio_progress_time)) > 0.5:
-                        pass 
-                
-                # IMPORTANT: Write text directly. Newlines are added by the buffer logic now.
-                piper_proc.stdin.write(text.encode('utf-8'))
+                piper_proc.stdin.write((text + "\n").encode('utf-8'))
                 await piper_proc.stdin.drain()
                 logger.debug(f"TTS SENT: {text}")
             
@@ -233,34 +215,38 @@ async def board_main():
                     data = json.loads(response_raw)
                     
                     if data['type'] == 'text':
+                        # 1. Print chunk immediately (Live feedback)
                         content = data['content']
                         print(content, end="", flush=True)
                         
-                        # Fluid TTS: Buffer until punctuation or a natural break
+                        # 2. Buffer for phrase-based TTS (continuity fix)
                         tts_buffer += content
+                        # print(f" [Buffer: {tts_buffer}]", end="\r", flush=True) # REMOVED: causing truncation
+                        
+                        # Find the last punctuation mark to split the phrase
                         punctuation_marks = ".!?,;:"
-                        split_idx = -1
+                        last_punc_idx = -1
                         for i, char in enumerate(tts_buffer):
                             if char in punctuation_marks:
-                                split_idx = i
-                                break
-                                
-                        if split_idx != -1:
-                            phrase = tts_buffer[:split_idx+1]
-                            tts_queue.put_nowait(phrase)
-                            tts_buffer = tts_buffer[split_idx+1:].lstrip()
-                        elif len(tts_buffer) > 30 and " " in tts_buffer:
-                            # Force split on last space to keep latency low
-                            last_space = tts_buffer.rfind(" ")
-                            phrase = tts_buffer[:last_space]
-                            tts_queue.put_nowait(phrase + " ") # Keep it continuous
-                            tts_buffer = tts_buffer[last_space+1:]
+                                last_punc_idx = i
+                        
+                        if last_punc_idx != -1:
+                            phrase = tts_buffer[:last_punc_idx+1].strip()
+                            if phrase:
+                                tts_queue.put_nowait(phrase)
+                            tts_buffer = tts_buffer[last_punc_idx+1:].lstrip()
+                        elif len(tts_buffer) > 40 and " " in tts_buffer:
+                            # Force a split if the phrase is getting too long (e.g. > 40 chars)
+                            last_space_idx = tts_buffer.rfind(" ")
+                            phrase = tts_buffer[:last_space_idx].strip()
+                            if phrase:
+                                tts_queue.put_nowait(phrase)
+                            tts_buffer = tts_buffer[last_space_idx+1:].lstrip()
                             
                     elif data['type'] == 'status' and data['content'] == 'done':
+                        # Final flush of the buffer
                         if tts_buffer.strip():
-                            tts_queue.put_nowait(tts_buffer.strip() + "\n")
-                        else:
-                            tts_queue.put_nowait("\n")
+                            tts_queue.put_nowait(tts_buffer.strip())
                         tts_buffer = ""
                         print("\n") # Newline after response ends
                         logger.info("Response ended. Waiting for speech to finish...")
