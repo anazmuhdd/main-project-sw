@@ -108,31 +108,34 @@ async def tts_worker():
     )
 
     # Shared state (updated by pipe_audio, read by SIGNAL_READY handler)
-    bytes_piped = 0
-    stream_start_time = None
+    total_bytes_piped = 0
+    planned_finish_time = time.time()
 
     async def pipe_audio():
-        """Real-time bridge: Piper stdout → aplay stdin. Updates byte counters."""
-        nonlocal bytes_piped, stream_start_time
+        """Real-time bridge: Piper stdout → aplay stdin. Updates global byte counter."""
+        nonlocal total_bytes_piped, planned_finish_time
         chunk_n = 0
         try:
             while True:
                 chunk = await piper_proc.stdout.read(4096)
                 if not chunk:
                     break
-                if stream_start_time is None:
-                    stream_start_time = time.time()
-                    logger.debug("[TTS►PIPE] First audio chunk received — aplay stream started")
+                
+                # Update the timeline: when will THIS chunk finish playing?
+                duration = len(chunk) / BYTES_PER_SEC
+                # audio appends to current queue. If queue empty, starts playing now.
+                planned_finish_time = max(time.time(), planned_finish_time) + duration
+                
                 if aplay_proc.stdin:
                     aplay_proc.stdin.write(chunk)
                     await aplay_proc.stdin.drain()
-                    bytes_piped += len(chunk)
+                    total_bytes_piped += len(chunk)
                     chunk_n += 1
-                    logger.debug(
-                        f"[TTS►PIPE] chunk#{chunk_n} +{len(chunk)}B  "
-                        f"total={bytes_piped}B  "
-                        f"~{bytes_piped/BYTES_PER_SEC:.2f}s audio queued to aplay"
-                    )
+                    if chunk_n % 20 == 0: # Reduce log verbosity
+                        logger.debug(
+                            f"[TTS►PIPE] chunk#{chunk_n} piped.  "
+                            f"Current audio queue end: +{planned_finish_time - time.time():.2f}s"
+                        )
         except Exception as e:
             logger.error(f"[TTS►PIPE ERROR] {e}")
 
@@ -142,9 +145,12 @@ async def tts_worker():
     logger.info("TTS Worker: Warming up Piper (priming ONNX engine)...")
     piper_proc.stdin.write(b" \n")
     await piper_proc.stdin.drain()
-    await asyncio.sleep(2.0)       # Wait for warmup audio to play through
-    stream_start_time = None       # Reset — warmup doesn't count
-    bytes_piped = 0
+    
+    # Wait for warmup audio to appear in pipe_audio
+    warmup_start = time.time()
+    while total_bytes_piped == 0 and time.time() - warmup_start < 3.0:
+        await asyncio.sleep(0.1)
+    
     logger.info("TTS Worker: Ready. Streaming mode active.")
 
     try:
@@ -152,48 +158,47 @@ async def tts_worker():
             text = await tts_queue.get()
 
             if text == "SIGNAL_READY":
-                logger.debug("[TTS►SYNC] SIGNAL_READY received — waiting for Piper to finish generating...")
-                # ── Wait for Piper to finish generating (bytes stop growing) ──
+                logger.debug("[TTS►SYNC] SIGNAL_READY received — waiting for audio to finish...")
+                
+                # 1. Wait for Piper to finish generating for everything sent so far
                 stable_count = 0
-                prev_bytes = bytes_piped
-                while stable_count < 2:
+                prev_bytes = total_bytes_piped
+                check_start = time.time()
+                
+                while stable_count < 3: # 300ms of stability
                     await asyncio.sleep(0.1)
-                    if bytes_piped == prev_bytes:
+                    if total_bytes_piped == prev_bytes:
                         stable_count += 1
                     else:
                         stable_count = 0
-                        prev_bytes = bytes_piped
-                logger.debug(f"[TTS►SYNC] Piper settled — total audio piped: {bytes_piped}B (~{bytes_piped/BYTES_PER_SEC:.2f}s)")
-
-                # ── Wait until aplay physically finishes speaking ──────────
-                if stream_start_time is not None and bytes_piped > 0:
-                    finish_time = stream_start_time + (bytes_piped / BYTES_PER_SEC)
-                    wait_for = finish_time - time.time() + 0.15
-                    if wait_for > 0:
-                        logger.info(
-                            f"[TTS►SYNC] aplay finish in {wait_for:.2f}s  "
-                            f"(bytes={bytes_piped}  duration={bytes_piped/BYTES_PER_SEC:.2f}s)"
-                        )
-                        await asyncio.sleep(wait_for)
-                    else:
-                        logger.debug("[TTS►SYNC] aplay already done (wait_for <= 0)")
-
-                logger.info("[TTS►SYNC] Speaker finished. Resetting counters.")
-                # ── Reset for next narration ───────────────────────────────
-                stream_start_time = None
-                bytes_piped = 0
-
+                        prev_bytes = total_bytes_piped
+                    
+                    # Safety timeout: if 5s passed and still no bytes, assume idle
+                    if time.time() - check_start > 5.0:
+                        break
+                
+                # 2. Precise sync: calculate when the current timeline finishes
+                wait_for = planned_finish_time - time.time() + 0.1 # Small buffer
+                
+                if wait_for > 0:
+                    logger.info(f"[TTS►SYNC] Waiting {wait_for:.2f}s for speaker to finish...")
+                    await asyncio.sleep(wait_for)
+                else:
+                    logger.debug(f"[TTS►SYNC] Audio already played through (wait={wait_for:.2f}s)")
+                
+                logger.info("[TTS►SYNC] Narrator finished. Signal sent.")
                 tts_queue.task_done()
                 continue
 
-            # ── Normal text — write to persistent Piper immediately ────────
+            # ── Normal text piece ──
             if text and text.strip():
-                logger.info(f"[TTS►PIPER] Sending text ({len(text.split())} words, {len(text)} chars): '{text[:80]}{'...' if len(text)>80 else ''}'")
-                piper_proc.stdin.write((text + "\n").encode("utf-8"))
+                # Stream to Piper immediately
+                piper_proc.stdin.write((text + " ").encode("utf-8"))
                 await piper_proc.stdin.drain()
-                logger.debug("[TTS►PIPER] Text written to Piper stdin")
 
             tts_queue.task_done()
+
+
 
     except Exception as e:
         logger.error(f"TTS Worker Loop Error: {e}")
@@ -291,7 +296,9 @@ async def board_main():
                         content = data['content']
                         print(content, end="", flush=True)
                         logger.debug(f"[LLM◄RX] text chunk len={len(content)} '{content[:40]}'")
-                        # Accumulate the FULL response
+                        # Stream to TTS queue IMMEDIATELY for lowest latency
+                        tts_queue.put_nowait(content)
+                        # Keep buffer for logging purposes
                         tts_buffer += content
 
                     elif data['type'] == 'status' and data['content'] == 'done':
@@ -304,9 +311,6 @@ async def board_main():
                             f"text='{tts_buffer.strip()[:100]}{'...' if response_len>100 else ''}'"
                         )
 
-                        if tts_buffer.strip():
-                            logger.info(f"[TTS►QUEUE] Queuing full response for TTS ({word_count} words)")
-                            tts_queue.put_nowait(tts_buffer.strip())
                         tts_buffer = ""
 
                         logger.debug("[SYNC] Queuing SIGNAL_READY and joining queue...")
@@ -314,6 +318,7 @@ async def board_main():
                         tts_queue.put_nowait("SIGNAL_READY")
                         await tts_queue.join()
                         t_sync_end = time.time()
+
                         logger.info(
                             f"[SYNC] TTS complete  "
                             f"total_speech_time={(t_sync_end - t_sync_start):.2f}s"
