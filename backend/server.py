@@ -140,7 +140,23 @@ async def vision_stream(websocket: WebSocket):
             if current_mode == "ObjectDetection":
                 detections, raw_detections = objects.analyze_scene(frame)
                 current_state = sorted(detections)
-                result_prompt = objects.get_llm_prompt(detections) if detections else None
+                
+                # REFINED PROMPT: Strict accuracy, no hallucinations
+                if detections:
+                    items_str = ", ".join(detections)
+                    result_prompt = f"""
+        Role: Helpful professional AI vision assistant for a blind person.
+        Input Data: {items_str}
+        
+        Task:
+        1. Narrate exactly what is seen in a natural, spatial way.
+        2. Be extremely concise.
+        3. Do NOT mention any objects that are not in the Input Data.
+        4. Focus on where the items are relative to the user (left, right, front).
+        
+        Narrate now:"""
+                else:
+                    result_prompt = None
                 
             elif current_mode == "Currency":
                 desc, total, raw_detections = currency.detect_and_sum(frame)
