@@ -53,48 +53,31 @@ tts_queue = asyncio.Queue()
 
 async def tts_worker():
     """
-    Perfect-sync TTS Worker.
-    Architecture:
-      1. Piper runs PERSISTENTLY (warm, never re-initialized).
-      2. At startup, a warm-up call is made so first real speech has ZERO delay.
-      3. For each sentence: send to Piper → collect audio bytes → play with a
-         dedicated `aplay` that we AWAIT → exact sync, no estimation needed.
-    """
-    logger.info("TTS Worker: Starting persistent Piper engine...")
+    Reliable TTS Worker using per-call Piper with communicate().
     
-    piper_proc = await asyncio.create_subprocess_exec(
-        PIPER_EXE, "--model", PIPER_MODEL, "--output-raw",
-        stdin=asyncio.subprocess.PIPE,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.DEVNULL
-    )
+    Why communicate()? It sends ALL input, reads ALL output, then waits for Piper
+    to exit. This gives us 100% of the audio with zero guessing or timeout issues.
+    The OS page-cache keeps Piper's binary and model file warm after the first call,
+    so subsequent calls take ~200-400ms instead of 1-2s cold start.
+    """
 
     async def synthesize_and_play(text: str):
-        """Send complete text to Piper, collect ALL audio, play it, await completion."""
-        piper_proc.stdin.write((text + "\n").encode("utf-8"))
-        await piper_proc.stdin.drain()
-        
-        # Read ALL audio chunks from Piper.
-        # Use 1.0s timeout — Piper on ARM hardware can take up to 800ms to generate
-        # audio for a full sentence. Stop reading when Piper goes silent.
-        audio_chunks = []
-        while True:
-            try:
-                chunk = await asyncio.wait_for(piper_proc.stdout.read(16384), timeout=1.0)
-                if chunk:
-                    audio_chunks.append(chunk)
-                else:
-                    break
-            except asyncio.TimeoutError:
-                break  # Piper finished generating — silence means done
-        
-        if not audio_chunks:
+        """Start Piper, send full text, collect ALL audio via communicate(), play it."""
+        # Start a fresh Piper process for this narration
+        piper_proc = await asyncio.create_subprocess_exec(
+            PIPER_EXE, "--model", PIPER_MODEL, "--output-raw",
+            stdin=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.DEVNULL
+        )
+        # communicate() sends the input and reads ALL stdout until Piper exits.
+        # Piper exits cleanly after processing one line — giving us 100% of the audio.
+        audio_data, _ = await piper_proc.communicate(input=(text + "\n").encode("utf-8"))
+
+        if not audio_data:
             return
-        
-        audio_data = b"".join(audio_chunks)
-        
-        # Play via a dedicated aplay and AWAIT COMPLETION.
-        # This is the only reliable way to know when the speaker goes silent.
+
+        # Play the complete audio buffer. Await until the speaker physically finishes.
         aplay_proc = await asyncio.create_subprocess_exec(
             "aplay", "-r", str(PIPER_SAMPLE_RATE), "-f", "S16_LE", "-t", "raw", "-",
             stdin=asyncio.subprocess.PIPE,
@@ -103,53 +86,37 @@ async def tts_worker():
         )
         aplay_proc.stdin.write(audio_data)
         aplay_proc.stdin.close()
-        await aplay_proc.wait()  # TRUE SYNC — blocks until speaker is physically done
+        await aplay_proc.wait()  # TRUE SYNC — returns only when speaker goes silent
 
-    # --- WARM-UP: Pre-heat Piper so first real sentence has no startup lag ---
-    logger.info("TTS Worker: Warming up Piper engine (first-request pre-heat)...")
+    # WARM-UP: Call Piper once so the OS caches the binary + model file.
+    # All subsequent calls will be significantly faster.
+    logger.info("TTS Worker: Warming up (pre-caching Piper model)...")
     try:
-        await asyncio.wait_for(synthesize_and_play(" "), timeout=8.0)
-        logger.info("TTS Worker: Piper ready. Zero cold-start latency from now on.")
+        await asyncio.wait_for(synthesize_and_play(" "), timeout=15.0)
+        logger.info("TTS Worker: Ready. Model cached, low latency from now on.")
     except Exception as e:
-        logger.warning(f"TTS warm-up failed (non-critical): {e}")
+        logger.warning(f"TTS warm-up issue (non-critical): {e}")
 
     try:
         while True:
             text = await tts_queue.get()
-            
+
             if text == "SIGNAL_READY":
-                # All sentences before this marker have been spoken & awaited.
-                # Drain any stale text items that might have accumulated
-                # (old responses that were superseded by a newer one).
-                drained = 0
-                while not tts_queue.empty():
-                    try:
-                        stale = tts_queue.get_nowait()
-                        if stale != "SIGNAL_READY":  # Don't drain other markers
-                            tts_queue.task_done()
-                            drained += 1
-                    except asyncio.QueueEmpty:
-                        break
-                if drained:
-                    logger.debug(f"Drained {drained} stale sentence(s) from queue.")
+                # All narration items before this marker were already awaited.
+                # Just unblock tts_queue.join() in the main loop.
                 tts_queue.task_done()
                 continue
-            
+
             if text and text.strip():
                 try:
                     await synthesize_and_play(text)
                 except Exception as e:
                     logger.error(f"TTS Playback Error: {e}")
-            
+
             tts_queue.task_done()
 
     except Exception as e:
         logger.error(f"TTS Worker Loop Error: {e}")
-    finally:
-        try:
-            piper_proc.terminate()
-        except Exception:
-            pass
 
 
 async def board_main():
