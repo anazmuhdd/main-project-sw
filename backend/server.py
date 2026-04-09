@@ -61,15 +61,24 @@ async def vision_stream(websocket: WebSocket):
     # Latency fix: Use a single-slot buffer for the latest frame
     latest_frame_data = {"data": None, "mode_idx": 0}
     frame_ready_event = asyncio.Event()
+    board_ready_event = asyncio.Event()
+    board_ready_event.set() # Board is initially ready
 
     async def frame_receiver():
         """Continuously drains the websocket and keeps only the latest frame."""
         try:
             while True:
-                data = await websocket.receive_bytes()
-                latest_frame_data["mode_idx"] = data[0]
-                latest_frame_data["data"] = data[1:]
-                frame_ready_event.set()
+                raw_data = await websocket.receive()
+                if "bytes" in raw_data:
+                    data = raw_data["bytes"]
+                    latest_frame_data["mode_idx"] = data[0]
+                    latest_frame_data["data"] = data[1:]
+                    frame_ready_event.set()
+                elif "text" in raw_data:
+                    msg = json.loads(raw_data["text"])
+                    if msg.get("type") == "ready":
+                        print("[Server] Board is READY for next frame.")
+                        board_ready_event.set()
         except WebSocketDisconnect:
             print("[Server] Receiver: Board connection lost.")
         except Exception as e:
@@ -80,9 +89,10 @@ async def vision_stream(websocket: WebSocket):
     
     try:
         while not receiver_task.done():
-            # Wait for either a new frame or the receiver task to finish
+            # Wait for BOTH a new frame AND the board to be READY
             try:
-                await asyncio.wait_for(frame_ready_event.wait(), timeout=0.1)
+                # Polling frequency for the readiness
+                await asyncio.wait_for(asyncio.gather(frame_ready_event.wait(), board_ready_event.wait()), timeout=0.1)
                 frame_ready_event.clear()
             except asyncio.TimeoutError:
                 continue
@@ -106,7 +116,7 @@ async def vision_stream(websocket: WebSocket):
             if frame is None:
                 continue
 
-            # ... (Rest of processing) ...
+            # ... processing ...
             preprocess_time = time.time() - start_time
             
             # Logic branch based on mode
@@ -153,6 +163,7 @@ async def vision_stream(websocket: WebSocket):
             # Trigger AI/LLM
             now = time.time()
             if result_prompt and (current_state != last_detection_state or (now - last_ai_processed_time) > AI_DEBOUNCE_INTERVAL):
+                board_ready_event.clear() # Board is NO LONGER READY until speech finishes
                 print(f"\n[LLM Prompt]: {result_prompt}")
                 print("[LLM Response]: ", end="", flush=True)
                 last_detection_state = current_state
