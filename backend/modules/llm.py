@@ -25,12 +25,13 @@ class LLMModule:
                 "Content-Type": "application/json"
             }
             payload = {
-                "model": "nvidia/qwen-2.5-7b-instruct",
+                "model": "qwen/qwen3.5-122b-a10b",
                 "messages": [{"role": "user", "content": prompt}],
-                "temperature": 0.2,
-                "top_p": 0.7,
+                "temperature": 0.7,
+                "top_p": 0.8,
                 "max_tokens": 1024,
-                "stream": True
+                "stream": True,
+                "chat_template_kwargs": {"enable_thinking": False}
             }
             
             try:
@@ -39,11 +40,17 @@ class LLMModule:
                     if line:
                         decoded_line = line.decode('utf-8')
                         if decoded_line.startswith('data: '):
-                            data = json.loads(decoded_line[6:])
-                            if 'choices' in data:
-                                chunk = data['choices'][0].get('delta', {}).get('content', '')
-                                if chunk:
-                                    yield chunk
+                            content_str = decoded_line[6:].strip()
+                            if content_str == "[DONE]" or not content_str:
+                                continue
+                            try:
+                                data = json.loads(content_str)
+                                if 'choices' in data:
+                                    chunk = data['choices'][0].get('delta', {}).get('content', '')
+                                    if chunk:
+                                        yield chunk
+                            except json.JSONDecodeError:
+                                continue
             except Exception as e:
                 yield f"[NVIDIA Error]: {e}"
                                 

@@ -55,11 +55,11 @@ NVIDIA_API_KEY = "nvapi-zCKx3XnCMP0ABkHCL8QXwLd_oOZmnyr3KbE8663Kw_caVoKW6vihxwd6
 
 # ── Pre-load Models ───────────────────────────────────────────────────────────
 logger.info("Pre-loading ObjectDetection model...")
-objects = ObjectModule(MODEL_PATH_V26_OBJECTS, MODEL_PATH_V5_OBJECTS)
+objects = ObjectModule(MODEL_PATH_V26_OBJECTS)
 logger.info("Pre-loading Currency model...")
 currency = CurrencyModule(MODEL_PATH_V5, MODEL_PATH_V26_CURRENCY)
 logger.info("Initializing LLM module...")
-llm = LLMModule(use_nvidia=False, nvidia_key=NVIDIA_API_KEY)
+llm = LLMModule(use_nvidia=True, nvidia_key=NVIDIA_API_KEY)
 logger.info("All models loaded. Server ready.")
 
 ocr = None  # Lazy-loaded on first OCR request
@@ -180,6 +180,7 @@ async def vision_stream(websocket: WebSocket):
             current_state = None
             result_prompt = None
             raw_detections = []
+            ocr_cleaned_text = None  # used later for streaming raw OCR text
 
             if current_mode == "ObjectDetection":
                 detections, raw_detections = objects.analyze_scene(frame)
@@ -191,26 +192,18 @@ async def vision_stream(websocket: WebSocket):
                     f"infer={( t_infer - t_decode)*1000:.1f}ms"
                 )
                 if detections:
-                    items_str = ", ".join(detections)
-                    result_prompt = f"""
-        ACT AS A SENSORY SYSTEM. Your only job is to narrate the provided camera data. 
-        Input Data: {items_str}
-        
-        Rules:
-        - Describe only the items in the Input Data.
-        - Be natural and spatial (left, right, front).
-        - DO NOT say you are an AI.
-        - DO NOT say you have no eyes.
-        - Keep it to 1-2 short sentences maximum.
-        
-        System Narration:"""
+                    result_prompt = objects.get_llm_prompt(detections)
                 else:
                     result_prompt = None
 
             elif current_mode == "Currency":
                 desc, total, raw_detections = currency.detect_and_sum(frame)
-                current_state = desc if total > 0 else None
-                result_prompt = currency.get_llm_prompt(desc) if total > 0 else None
+                if total > 0:
+                    current_state = desc
+                    result_prompt = currency.get_llm_prompt(desc, total)
+                else:
+                    current_state = None
+                    result_prompt = None
                 t_infer = time.time()
                 logger.info(
                     f"[DETECT] Currency  total={total}  "
@@ -223,12 +216,22 @@ async def vision_stream(websocket: WebSocket):
                     logger.info("[OCR] Initializing OCR module (first use)...")
                     ocr = OCRModule()
                     logger.info("[OCR] OCR module ready")
-                text = ocr.perform_ocr(raw_bytes)
-                current_state = text
-                result_prompt = ocr.get_llm_prompt(text)
+                # Step 1: Extract structured OCR output from VLM
+                ocr_raw = ocr.perform_ocr(raw_bytes)
+                # Step 2: Parse OBJECT and TEXT fields in Python
+                ocr_obj, ocr_text = ocr.parse_ocr_output(ocr_raw)
+                # Step 3 & 4: Clean + Decision Logic — handle in code, NOT in LLM
+                ocr_cleaned_text = ocr.clean_text(ocr_text)
+                if ocr_cleaned_text:
+                    current_state = f"{ocr_obj}:{ocr_cleaned_text[:60]}"
+                    result_prompt = ocr.get_llm_prompt(ocr_obj, ocr_cleaned_text)
+                else:
+                    current_state = None
+                    result_prompt = None
+                    ocr_cleaned_text = None  # ensure we don't send empty text
                 t_infer = time.time()
                 logger.info(
-                    f"[DETECT] OCR  chars={len(text)}  "
+                    f"[DETECT] OCR  obj='{ocr_obj}'  chars={len(ocr_cleaned_text or '')}  "
                     f"infer={(t_infer-t_decode)*1000:.1f}ms"
                 )
 
@@ -279,6 +282,12 @@ async def vision_stream(websocket: WebSocket):
                     chunk_count += 1
                     logger.debug(f"[LLM►TX] chunk#{chunk_count} len={len(chunk)} '{chunk}'")
 
+                # For OCR mode: after the LLM summary, also stream the full cleaned text
+                if current_mode == "OCR" and ocr_cleaned_text:
+                    full_text_msg = " Full text: " + ocr_cleaned_text
+                    await websocket.send_text(json.dumps({"type": "text", "content": full_text_msg}))
+                    logger.info(f"[OCR►TX] Streamed {len(ocr_cleaned_text)} chars of raw OCR text.")
+
                 await websocket.send_text(json.dumps({"type": "status", "content": "done"}))
 
                 t_llm_end = time.time()
@@ -288,7 +297,7 @@ async def vision_stream(websocket: WebSocket):
                     f"total_chars={len(full_response)}  "
                     f"llm_time={(t_llm_end - t_llm_start)*1000:.0f}ms"
                 )
-                logger.info(f"[LLM►RESPONSE] '{full_response.strip()}'")
+                logger.info(f"[LLM►RESPONSE] '{full_response.strip()}'") 
 
             else:
                 skip_reason = "board_not_ready" if not board_ready_event.is_set() else (

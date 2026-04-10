@@ -1,148 +1,146 @@
-import sys
 import os
 import cv2
-import numpy as np
-import torch
-from pathlib import Path
+import logging
+from ultralytics import YOLO
 
-# --- Dependency Setup ---
-FILE = Path(__file__).resolve()
-BACKEND_ROOT = FILE.parents[1] # c:/Users/anasm/.../backend
-PROJECT_ROOT = BACKEND_ROOT.parents[0] # c:/Users/anasm/.../
-YOLOV5_ROOT = PROJECT_ROOT / "yolov5"
-
-# Add yolov5 to sys.path if not there
-if str(YOLOV5_ROOT) not in sys.path:
-    sys.path.insert(0, str(YOLOV5_ROOT))
-
-# YOLOv5 Imports from local source
-from models.common import DetectMultiBackend
-from utils.augmentations import letterbox
-from utils.general import check_img_size, non_max_suppression, scale_boxes
-from utils.segment.general import process_mask
-from utils.torch_utils import select_device
+# Denomination mapping
+CLASS_TO_VAL = {
+    'n10': 10,
+    'n20': 20,
+    'n50': 50,
+    'n100': 100,
+    'n200': 200,
+    'n500': 500
+}
 
 class CurrencyModule:
     """
-    Handles high-quality currency segmentation and summation using YOLOv5 source code.
+    Handles currency detection and summation using Ultralytics YOLO (v8/v26).
     """
-    def __init__(self, model_path_v5, model_path_v26_ignored):
-        # We'll use the user specified YOLOv5 currency model
-        # Try GPU, fallback to CPU
-        try:
-            self.device = select_device("0")
-        except Exception:
-            self.device = select_device("cpu")
+    def __init__(self, model_path_v5_ignored=None, model_path_v26=None):
+        # Prefer v26 as requested by the user
+        path = model_path_v26 if model_path_v26 else model_path_v5_ignored
+        if not path:
+            raise ValueError("No model path provided for CurrencyModule")
             
-        self.half = self.device.type != "cpu"
-        
-        # Adjust weight path to be absolute or relative to project root
-        if not os.path.isabs(model_path_v5):
-            model_path_v5 = str((PROJECT_ROOT / model_path_v5).resolve())
-
-        # print(f"[Currency] Loading model: {model_path_v5} on {self.device}...")
-        self.model = DetectMultiBackend(model_path_v5, device=self.device, dnn=False, fp16=self.half)
-
-        self.stride = int(self.model.stride)
-        self.names = self.model.names                  # Output: {0:'n10', 1:'n100', ...}
-        self.pt = self.model.pt
-        self.imgsz = check_img_size(640, s=self.stride)
-        
-        # Warmup
-        self.model.warmup(imgsz=(1, 3, self.imgsz, self.imgsz))
-        # print(f"[Currency] Model loaded successfully. Classes: {list(self.names.values())}")
-        
-    def preprocess(self, frame):
-        """Standard YOLOv5 letterbox preprocessing."""
-        img = letterbox(frame, self.imgsz, stride=self.stride, auto=self.pt)[0]
-        img = img.transpose((2, 0, 1))[::-1]        # HWC → CHW, BGR → RGB
-        img = np.ascontiguousarray(img)
-        img = torch.from_numpy(img).to(self.device).half() if self.half else torch.from_numpy(img).to(self.device).float()
-        img /= 255.0
-        if img.ndimension() == 3:
-            img = img.unsqueeze(0)
-        return img
+        print(f"[Currency] Loading model: {path}")
+        self.model = YOLO(path)
+        self.conf_threshold = 0.5
+        self.names = self.model.names
 
     def detect_and_sum(self, frame):
         """
-        Runs inference and sums note values using segmentation logic.
+        Runs inference and returns a summary for the server.
+        Matches the interface expected by server.py: (description, total, raw_detections)
         """
-        img = self.preprocess(frame)
+        results = self.model.predict(frame, conf=self.conf_threshold, verbose=False)
         
-        # 1. Inference
-        out = self.model(img, augment=False, visualize=False)
-        pred = out[0]        # (1, N, 5+nc+nm)
-        proto = out[1]       # (1, 32, 160, 160)
-        
-        # 2. NMS (nm=32 for segmentation)
-        pred = non_max_suppression(pred, 0.50, 0.45, classes=None, agnostic=False, max_det=1000, nm=32)
-        
-        detected_notes = []
         counts = {}
-        total = 0
-        
-        # 3. Process detections
-        for i, det in enumerate(pred):
-            if len(det):
-                # Rescale boxes to original frame size
-                det[:, :4] = scale_boxes(img.shape[2:], det[:, :4], frame.shape).round()
-                
-                for *xyxy, conf, cls in reversed(det[:, :6]):
-                    raw_label = self.names[int(cls)]
-                    # Handle 'n' prefix
-                    label = raw_label[1:] if raw_label.startswith('n') else raw_label
-                    print(f"[Currency] Detected: {raw_label} ({conf:.2f}) -> Path: {label}")
-                    
-                    try:
-                        val = int(label)
-                        total += val
-                        detected_notes.append(val)
-                        counts[val] = counts.get(val, 0) + 1
-                    except ValueError:
-                        # print(f"[Currency] Info: Skipped non-integer label '{label}'")
-                        pass
-                
-        # 4. Result formatting
-        if not detected_notes:
-            print("[Currency] No currency found.")
-            return "No currency detected.", 0, []
-            
-        summary_parts = []
         raw_detections = []
-        for val in sorted(counts.keys()):
-            count = counts[val]
-            summary_parts.append(f"{count} {val} rupee note{'s' if count > 1 else ''}")
+        total_sum = 0
+        
+        if len(results) > 0:
+            for box in results[0].boxes:
+                cls_id = int(box.cls[0])
+                name = self.names[cls_id]
+                conf = float(box.conf[0])
+                xyxy = box.xyxy[0].tolist()
+                
+                val = CLASS_TO_VAL.get(name, 0)
+                if val > 0:
+                    counts[name] = counts.get(name, 0) + 1
+                    total_sum += val
+                    
+                raw_detections.append({
+                    "bbox": [int(x) for x in xyxy],
+                    "label": name,
+                    "conf": conf,
+                    "value": val
+                })
+        
+        if not counts:
+            return "No currency detected.", 0, []
+
+        details = []
+        # Sort by denomination for cleaner output
+        sorted_names = sorted(counts.keys(), key=lambda x: CLASS_TO_VAL[x], reverse=True)
+        for name in sorted_names:
+            count = counts[name]
+            val = CLASS_TO_VAL[name]
+            label = f"{val} rupee note" if count == 1 else f"{val} rupee notes"
+            details.append(f"{count} {label}")
             
-        # Reprocess for raw_detections list
-        for i, det in enumerate(pred):
-            if len(det):
-                for *xyxy, conf, cls in reversed(det[:, :6]):
-                    raw_detections.append({
-                        "bbox": [int(x) for x in xyxy],
-                        "label": self.names[int(cls)],
-                        "conf": float(conf)
-                    })
+        details_str = ", ".join(details)
+        # We return details_str as the 'description' for get_llm_prompt
+        return details_str, total_sum, raw_detections
 
-        summary = ", ".join(summary_parts)
-        print(f"[Currency] Sum: {total} | Breakdown: {summary}")
-        return f"You are holding {summary}. The total amount is {total} rupees.", total, raw_detections
+    def get_llm_prompt(self, details_str, total=None):
+        """
+        Constructs the high-quality prompt for the LLM.
+        Note: server.py currently calls result_prompt = currency.get_llm_prompt(desc)
+        where desc is the string returned by detect_and_sum.
+        """
+        # If total isn't passed, we try to extract it from context or just rely on details_str
+        # However, for the new prompt, we want both. 
+        # I'll update the server.py call as well to be more robust, 
+        # or I can embed the total into the description if needed.
+        
+        # For now, let's assume details_str is the breakdown.
+        # If total is None, we'll try to calculate it again or just omit from prompt (not ideal).
+        
+        # Actually, I will modify currency.py to be compatible with the current server.py 
+        # but I'll also modify server.py to pass the total correctly.
+        
+        # If total is None, let's compute it from details_str for backward compatibility if possible
+        # but better to just fix the call site.
+        
+        t_val = total if total is not None else "Unknown"
 
-    def get_llm_prompt(self, description):
-        """Constructs a prompt for a visually impaired user."""
         return f"""
-        Role: You are a warm and helpful personal assistant for a visually impaired person.
-        Context: The user is holding currency notes that have been detected by a camera.
-        Input Data: {description}
-        
-        Task:
-        1. Tell the user how much money they are holding in a clear and friendly manner.
-        2. Specifically state the total amount first, then the breakdown of notes if relevant.
-        3. Keep it conversational (e.g., "You have three fifty-rupee notes, totaling 150 rupees").
+You are a real-time assistive AI helping a visually impaired person understand money they are holding.
 
-        IMPORTANT:
-        - Output ONLY the natural speech for the user.
-        - DO NOT output any internal reasoning, chain-of-thought, or <thought> tags.
-        - Avoid technical phrases like "Detection Summary" or "Object detected".
-        
-        Response:"""
+GOAL:
+Speak like a helpful human assistant describing what the user is holding.
 
+IMPORTANT STYLE INSTRUCTIONS:
+- Speak directly to the user.
+- Use natural phrases like:
+  "You are holding...", "You have...", "You are carrying..."
+- Make it feel personal and immediate.
+- Do NOT sound robotic or report-like.
+
+STRICT RULES:
+- Maximum 2 sentences.
+- First sentence MUST include total amount.
+- Second sentence MUST describe denominations.
+- NEVER change the numbers.
+- NEVER convert numbers into words (720 must stay 720).
+- NEVER guess or add/remove notes.
+- DO NOT mention detection, AI, or system details.
+- Keep it simple, clear, and friendly.
+
+FEW-SHOT EXAMPLES (FOR STYLE UNDERSTANDING ONLY — DO NOT COPY EXACTLY):
+
+Example 1:
+Input: Total 150 rupees, Breakdown: 1 100 rupee note, 1 50 rupee note
+Output: You are holding 150 rupees, including one 100 note and one 50 note.
+
+Example 2:
+Input: Total 270 rupees, Breakdown: 1 200 rupee note, 1 50 rupee note, 1 20 rupee note
+Output: You have 270 rupees with one 200 note, one 50 note, and one 20 note.
+
+Example 3:
+Input: Total 500 rupees, Breakdown: 1 500 rupee note
+Output: You are carrying 500 rupees as a single 500 note.
+
+NOTE:
+- These are examples to understand tone and style.
+- Do NOT copy sentences exactly.
+- Always generate a fresh sentence based on input, not on the rough example.
+
+INPUT:
+Total: {t_val} rupees
+Breakdown: {details_str}
+
+OUTPUT:
+"""
