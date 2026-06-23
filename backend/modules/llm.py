@@ -8,7 +8,7 @@ class LLMModule:
     Handles LLM processing and response streaming for the visually impaired.
     """
     def __init__(self, use_nvidia=False, nvidia_key=None):
-        self.use_nvidia = use_nvidia
+        self.use_nvidia = False
         self.nvidia_key = nvidia_key
         self.local_model = "qwen3.5:2b"  # User has this model locally
         self.nvidia_url = "https://integrate.api.nvidia.com/v1/chat/completions"
